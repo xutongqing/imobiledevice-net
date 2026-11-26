@@ -197,7 +197,7 @@ jobs:
           path: artifacts/libimobiledevice/win-x64
 
   build-osx-arm64:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
