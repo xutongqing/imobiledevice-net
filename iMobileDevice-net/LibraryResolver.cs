@@ -126,6 +126,7 @@ namespace iMobileDevice
                 return TryLoadCandidates(
                     assembly,
                     searchPath,
+                    "libplist-2.0-12.dll",
                     "libplist-2.0-4.dll",
                     "libplist-2.0-3.dll",
                     "libplist-2.0.dll",
@@ -137,6 +138,7 @@ namespace iMobileDevice
                 return TryLoadCandidates(
                     assembly,
                     searchPath,
+                    "libplist-2.0.so.12",
                     "libplist-2.0.so.4",
                     "libplist-2.0.so.3",
                     "libplist-2.0.so",
@@ -149,6 +151,7 @@ namespace iMobileDevice
                 return TryLoadCandidates(
                     assembly,
                     searchPath,
+                    "libplist-2.0.12.dylib",
                     "libplist-2.0.4.dylib",
                     "libplist-2.0.dylib",
                     "libplist.dylib");

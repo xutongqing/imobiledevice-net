@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install build dependencies
         run: |
@@ -56,10 +58,10 @@ jobs:
 
           STAGE="$PWD/artifacts/libimobiledevice/linux-x64/lib"
           mkdir -p "$STAGE"
-          for f in "$PREFIX"/lib/*.so*; do
+          for f in "$PREFIX"/lib/*.so.[0-9] "$PREFIX"/lib/*.so.[0-9][0-9]; do
             [ -e "$f" ] || continue
             base=$(basename "$f")
-            # Copy actual target file for each SONAME entry (avoid broken symlinks in zip/nupkg)
+            [[ "$base" == libplist++* ]] && continue
             cp -L "$f" "$STAGE/$base"
           done
           for f in "$STAGE"/*.so*; do
@@ -93,6 +95,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup MSYS2 (MINGW64)
         uses: msys2/setup-msys2@v2
@@ -108,7 +112,6 @@ jobs:
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-curl
             mingw-w64-x86_64-libxml2
-            mingw-w64-x86_64-libusb
             mingw-w64-x86_64-readline
 
       - name: Build upstream native libraries (win-x64)
