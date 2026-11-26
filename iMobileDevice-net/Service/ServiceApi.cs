@@ -101,9 +101,9 @@ namespace iMobileDevice.Service
         /// SERVICE_E_SUCCESS on success, or a SERVICE_E_* error code
         /// otherwise.
         /// </returns>
-        public virtual ServiceError service_client_factory_start_service(iDeviceHandle device, string serviceName, ref System.IntPtr client, string label, ref ConstructorFunc constructorFunc, ref int errorCode)
+        public virtual ServiceError service_client_factory_start_service(iDeviceHandle device, string serviceName, ref System.IntPtr client, string label, ConstructorFunc constructorFunc, ref int errorCode)
         {
-            return ServiceNativeMethods.service_client_factory_start_service(device, serviceName, ref client, label, ref constructorFunc, ref errorCode);
+            return ServiceNativeMethods.service_client_factory_start_service(device, serviceName, ref client, label, constructorFunc, ref errorCode);
         }
         
         /// <summary>

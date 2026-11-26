@@ -57,17 +57,24 @@ jobs:
           build_repo libideviceactivation
 
           STAGE="$PWD/artifacts/libimobiledevice/linux-x64/lib"
-          mkdir -p "$STAGE"
+          STAGE_BIN="$PWD/artifacts/libimobiledevice/linux-x64/bin"
+          mkdir -p "$STAGE" "$STAGE_BIN"
           for f in "$PREFIX"/lib/*.so.[0-9] "$PREFIX"/lib/*.so.[0-9][0-9]; do
             [ -e "$f" ] || continue
             base=$(basename "$f")
             [[ "$base" == libplist++* ]] && continue
             cp -L "$f" "$STAGE/$base"
           done
-          for f in "$STAGE"/*.so*; do
-            patchelf --set-rpath '$ORIGIN' "$f" || true
+          for f in "$PREFIX"/bin/*; do
+            [ -f "$f" ] && [ -x "$f" ] || continue
+            cp -L "$f" "$STAGE_BIN/$(basename "$f")"
           done
-          ls -la "$STAGE"
+          for f in "$STAGE"/*.so* "$STAGE_BIN"/*; do
+            [ -f "$f" ] && patchelf --set-rpath '$ORIGIN' "$f" || true
+          done
+          ls -la "$STAGE" "$STAGE_BIN"
+          LD_LIBRARY_PATH="$STAGE" "$STAGE_BIN/idevice_id" --version
+          LD_LIBRARY_PATH="$STAGE" "$STAGE_BIN/ideviceimagemounter" --version
 
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
@@ -151,17 +158,21 @@ jobs:
           STAGE="$PWD/artifacts/libimobiledevice/win-x64/bin"
           mkdir -p "$STAGE"
           cp -f "$PREFIX"/bin/*.dll "$STAGE/"
+          cp -f "$PREFIX"/bin/*.exe "$STAGE/"
 
-          # Collect transitive MinGW64 runtime DLL dependencies
+          # Collect transitive MinGW64 runtime DLL dependencies (for both DLLs and CLI tools)
           for pass in 1 2 3; do
-            for dll in "$STAGE"/*.dll; do
-              ldd "$dll" | awk '/\/mingw64\/bin\// { print $3 }' | while read -r dep; do
+            for bin in "$STAGE"/*.dll "$STAGE"/*.exe; do
+              [ -f "$bin" ] || continue
+              ldd "$bin" | awk '/\/mingw64\/bin\// { print $3 }' | while read -r dep; do
                 [ -f "$dep" ] && cp -n "$dep" "$STAGE/" || true
               done
             done
           done
 
           ls -la "$STAGE"
+          "$STAGE/idevice_id.exe" --version
+          "$STAGE/ideviceimagemounter.exe" --version
 
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4

@@ -159,9 +159,29 @@ namespace iMobileDevice.Screenshotr
         /// <returns>
         /// SCREENSHOTR_E_SUCCESS on success
         /// </returns>
+        private static bool useFallbackScreenshotFree;
+
         public virtual ScreenshotrError screenshotr_screenshot_free(System.IntPtr imgdata)
         {
-            return ScreenshotrNativeMethods.screenshotr_screenshot_free(imgdata);
+            if (imgdata == System.IntPtr.Zero)
+            {
+                return ScreenshotrError.Success;
+            }
+
+            if (!useFallbackScreenshotFree)
+            {
+                try
+                {
+                    return ScreenshotrNativeMethods.screenshotr_screenshot_free(imgdata);
+                }
+                catch (System.EntryPointNotFoundException)
+                {
+                    useFallbackScreenshotFree = true;
+                }
+            }
+
+            this.Parent.Plist.plist_mem_free(imgdata);
+            return ScreenshotrError.Success;
         }
     }
 }

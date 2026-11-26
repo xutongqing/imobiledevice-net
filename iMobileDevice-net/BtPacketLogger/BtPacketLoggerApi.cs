@@ -7,12 +7,17 @@
 
 namespace iMobileDevice.BtPacketLogger
 {
+    using System;
+    using System.Collections.Concurrent;
     using iMobileDevice.iDevice;
     using iMobileDevice.Lockdown;
 
     public partial class BtPacketLoggerApi : IBtPacketLoggerApi
     {
         private ILibiMobileDevice parent;
+
+        private readonly ConcurrentDictionary<IntPtr, BtPacketLoggerReceiveCallBack> activeCallbacks =
+            new ConcurrentDictionary<IntPtr, BtPacketLoggerReceiveCallBack>();
 
         public BtPacketLoggerApi(ILibiMobileDevice parent)
         {
@@ -51,17 +56,36 @@ namespace iMobileDevice.BtPacketLogger
 
         public virtual BtPacketLoggerError bt_packet_logger_client_free(System.IntPtr client)
         {
-            return BtPacketLoggerNativeMethods.bt_packet_logger_client_free(client);
+            BtPacketLoggerError returnValue = BtPacketLoggerNativeMethods.bt_packet_logger_client_free(client);
+            this.activeCallbacks.TryRemove(client, out _);
+            return returnValue;
         }
 
         public virtual BtPacketLoggerError bt_packet_logger_start_capture(BtPacketLoggerClientHandle client, BtPacketLoggerReceiveCallBack callback, System.IntPtr userData)
         {
-            return BtPacketLoggerNativeMethods.bt_packet_logger_start_capture(client, callback, userData);
+            IntPtr key = (client != null && !client.IsInvalid) ? client.DangerousGetHandle() : IntPtr.Zero;
+            if (key != IntPtr.Zero && callback != null)
+            {
+                this.activeCallbacks[key] = callback;
+            }
+
+            BtPacketLoggerError returnValue = BtPacketLoggerNativeMethods.bt_packet_logger_start_capture(client, callback, userData);
+            if (returnValue != BtPacketLoggerError.Success && key != IntPtr.Zero)
+            {
+                this.activeCallbacks.TryRemove(key, out _);
+            }
+
+            return returnValue;
         }
 
         public virtual BtPacketLoggerError bt_packet_logger_stop_capture(BtPacketLoggerClientHandle client)
         {
-            return BtPacketLoggerNativeMethods.bt_packet_logger_stop_capture(client);
+            BtPacketLoggerError returnValue = BtPacketLoggerNativeMethods.bt_packet_logger_stop_capture(client);
+            if (client != null && !client.IsInvalid)
+            {
+                this.activeCallbacks.TryRemove(client.DangerousGetHandle(), out _);
+            }
+            return returnValue;
         }
 
         public virtual BtPacketLoggerError bt_packet_logger_receive_with_timeout(BtPacketLoggerClientHandle client, byte[] data, uint size, ref uint received, uint timeout)

@@ -88,6 +88,8 @@ namespace iMobileDevice.Afc
         
         ServiceClientFailed = 34,
         
+        SslError = 34,
+        
         EmptyResponse = 35,
         
         IncompleteHeader = 36,

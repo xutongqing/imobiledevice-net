@@ -27,7 +27,7 @@ namespace iMobileDevice.DebugServer
     public partial class DebugServerNativeMethods
     {
         
-        public static DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out string response, ref uint responseSize)
+        public static DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out string response, ref System.UIntPtr responseSize)
         {
             System.Runtime.InteropServices.ICustomMarshaler responseMarshaler = NativeStringMarshaler.GetInstance(null);
             System.IntPtr responseNative = System.IntPtr.Zero;
@@ -37,7 +37,7 @@ namespace iMobileDevice.DebugServer
             return returnValue;
         }
         
-        public static DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out string response, ref uint responseSize)
+        public static DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out string response, ref System.UIntPtr responseSize)
         {
             System.Runtime.InteropServices.ICustomMarshaler responseMarshaler = NativeStringMarshaler.GetInstance(null);
             System.IntPtr responseNative = System.IntPtr.Zero;
@@ -86,7 +86,7 @@ namespace iMobileDevice.DebugServer
             encodedBufferMarshaler.CleanUpNativeData(encodedBufferNative);
         }
         
-        public static void debugserver_decode_string(string encodedBuffer, uint encodedLength, out string buffer)
+        public static void debugserver_decode_string(string encodedBuffer, System.UIntPtr encodedLength, out string buffer)
         {
             System.Runtime.InteropServices.ICustomMarshaler bufferMarshaler = NativeStringMarshaler.GetInstance(null);
             System.IntPtr bufferNative = System.IntPtr.Zero;

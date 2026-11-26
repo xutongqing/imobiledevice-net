@@ -36,7 +36,7 @@ namespace iMobileDevice.Tests
         [Fact]
         public void InstProxyCheckCapabilitiesMatchZero()
         {
-            Assert.Equal(InstallationProxyError.InvalidArg, api.InstallationProxy.instproxy_check_capabilities_match(InstallationProxyClientHandle.Zero, out string capabilities, PlistHandle.Zero, out PlistHandle result));
+            Assert.Equal(InstallationProxyError.InvalidArg, api.InstallationProxy.instproxy_check_capabilities_match(InstallationProxyClientHandle.Zero, new System.Collections.ObjectModel.ReadOnlyCollection<string>(Array.Empty<string>()), PlistHandle.Zero, out PlistHandle result));
         }
 
         [Fact]

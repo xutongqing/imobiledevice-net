@@ -137,7 +137,7 @@ namespace iMobileDevice.NotificationProxy
         /// or an error returned by np_observe_notification.
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(NotificationProxyNativeMethods.LibraryName, EntryPoint="np_observe_notifications", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern NotificationProxyError np_observe_notifications(NotificationProxyClientHandle client, out System.IntPtr notificationSpec);
+        public static extern NotificationProxyError np_observe_notifications(NotificationProxyClientHandle client, System.IntPtr notificationSpec);
         
         /// <summary>
         /// This function allows an application to define a callback function that will

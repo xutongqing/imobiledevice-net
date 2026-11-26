@@ -418,7 +418,7 @@ namespace iMobileDevice.InstallationProxy
         /// INSTPROXY_E_SUCCESS on success or an INSTPROXY_E_* error value if
         /// an error occurred.
         /// </returns>
-        InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, out string capabilities, PlistHandle clientOptions, out PlistHandle result);
+        InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, System.Collections.ObjectModel.ReadOnlyCollection<string> capabilities, PlistHandle clientOptions, out PlistHandle result);
         
         /// <summary>
         /// Gets the name from a command dictionary.
@@ -539,6 +539,8 @@ namespace iMobileDevice.InstallationProxy
         /// The values passed are expected to be strings.
         /// </remarks>
         void instproxy_client_options_set_return_attributes(PlistHandle clientOptions);
+        
+        void instproxy_client_options_set_return_attributes(PlistHandle clientOptions, params string[] attributes);
         
         /// <summary>
         /// Frees client_options plist.

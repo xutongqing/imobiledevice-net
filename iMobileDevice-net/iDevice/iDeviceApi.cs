@@ -31,6 +31,11 @@ namespace iMobileDevice.iDevice
         /// Backing field for the <see cref="Parent"/> property
         /// </summary>
         private ILibiMobileDevice parent;
+
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<System.IntPtr, iDeviceEventCallBack> activeEventSubscriptions =
+            new System.Collections.Concurrent.ConcurrentDictionary<System.IntPtr, iDeviceEventCallBack>();
+
+        private iDeviceEventCallBack legacyEventCallBack;
         
         /// <summary>
         /// Initializes a new instance of the <see cref="iDeviceApi"/> class
@@ -59,6 +64,7 @@ namespace iMobileDevice.iDevice
         /// <param name="callback">
         /// The callback which will receive the debug messages. Set to NULL to redirect to stdout.
         /// </param>
+        [System.Obsolete("Not present in upstream libimobiledevice; only available in legacy libimobiledevice-win32 builds.")]
         public virtual void idevice_set_debug_callback(iDeviceDebugCallBack callback)
         {
             iDeviceNativeMethods.idevice_set_debug_callback(callback);
@@ -93,7 +99,13 @@ namespace iMobileDevice.iDevice
         /// </returns>
         public virtual iDeviceError idevice_event_subscribe(iDeviceEventCallBack callback, System.IntPtr userData)
         {
-            return iDeviceNativeMethods.idevice_event_subscribe(callback, userData);
+            this.legacyEventCallBack = callback;
+            iDeviceError returnValue = iDeviceNativeMethods.idevice_event_subscribe(callback, userData);
+            if (returnValue != iDeviceError.Success)
+            {
+                this.legacyEventCallBack = null;
+            }
+            return returnValue;
         }
         
         /// <summary>
@@ -105,7 +117,12 @@ namespace iMobileDevice.iDevice
         /// </returns>
         public virtual iDeviceError idevice_event_unsubscribe()
         {
-            return iDeviceNativeMethods.idevice_event_unsubscribe();
+            iDeviceError returnValue = iDeviceNativeMethods.idevice_event_unsubscribe();
+            if (returnValue == iDeviceError.Success)
+            {
+                this.legacyEventCallBack = null;
+            }
+            return returnValue;
         }
         
         /// <summary>
@@ -464,6 +481,7 @@ namespace iMobileDevice.iDevice
         /// <returns>
         /// 0 on success or negative on error
         /// </returns>
+        [System.Obsolete("Not present in upstream libimobiledevice; only available in legacy libimobiledevice-win32 builds.")]
         public virtual iDeviceError idevice_set_socket_type(int value)
         {
             return iDeviceNativeMethods.idevice_set_socket_type(value);
@@ -479,6 +497,7 @@ namespace iMobileDevice.iDevice
         /// <returns>
         /// 0 on success or negative on error
         /// </returns>
+        [System.Obsolete("Not present in upstream libimobiledevice; only available in legacy libimobiledevice-win32 builds.")]
         public virtual iDeviceError idevice_get_socket_type(ref int value)
         {
             return iDeviceNativeMethods.idevice_get_socket_type(ref value);
@@ -497,6 +516,7 @@ namespace iMobileDevice.iDevice
         /// <returns>
         /// 0 on success or negative on error
         /// </returns>
+        [System.Obsolete("Not present in upstream libimobiledevice; only available in legacy libimobiledevice-win32 builds.")]
         public virtual iDeviceError idevice_set_tcp_endpoint(string host, ushort port)
         {
             return iDeviceNativeMethods.idevice_set_tcp_endpoint(host, port);
@@ -516,6 +536,7 @@ namespace iMobileDevice.iDevice
         /// <returns>
         /// 0 on success or negative on error
         /// </returns>
+        [System.Obsolete("Not present in upstream libimobiledevice; only available in legacy libimobiledevice-win32 builds.")]
         public virtual iDeviceError idevice_get_tcp_endpoint(out string host, ref ushort port)
         {
             return iDeviceNativeMethods.idevice_get_tcp_endpoint(out host, ref port);
@@ -531,7 +552,12 @@ namespace iMobileDevice.iDevice
             if (context != null)
             {
                 context.Api = this.Parent;
+                if (returnValue == iDeviceError.Success && !context.IsInvalid && callback != null)
+                {
+                    this.activeEventSubscriptions[context.DangerousGetHandle()] = callback;
+                }
             }
+            System.GC.KeepAlive(callback);
             return returnValue;
         }
         
@@ -540,7 +566,9 @@ namespace iMobileDevice.iDevice
         /// </summary>
         public virtual iDeviceError idevice_events_unsubscribe(System.IntPtr context)
         {
-            return iDeviceNativeMethods.idevice_events_unsubscribe(context);
+            iDeviceError returnValue = iDeviceNativeMethods.idevice_events_unsubscribe(context);
+            this.activeEventSubscriptions.TryRemove(context, out _);
+            return returnValue;
         }
         
         /// <summary>

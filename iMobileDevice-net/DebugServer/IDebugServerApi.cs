@@ -182,7 +182,7 @@ namespace iMobileDevice.DebugServer
         /// DEBUGSERVER_E_SUCCESS on success,
         /// DEBUGSERVER_E_INVALID_ARG when client or command is NULL
         /// </returns>
-        DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out string response, ref uint responseSize);
+        DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out string response, ref System.UIntPtr responseSize);
         
         /// <summary>
         /// Receives and parses response of debugserver service.
@@ -200,7 +200,7 @@ namespace iMobileDevice.DebugServer
         /// DEBUGSERVER_E_SUCCESS on success,
         /// DEBUGSERVER_E_INVALID_ARG when client is NULL
         /// </returns>
-        DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out string response, ref uint responseSize);
+        DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out string response, ref System.UIntPtr responseSize);
         
         /// <summary>
         /// Controls status of ACK mode when sending commands or receiving responses.
@@ -316,7 +316,7 @@ namespace iMobileDevice.DebugServer
         /// <param name="buffer">
         /// Decoded string to be freed by the caller
         /// </param>
-        void debugserver_decode_string(string encodedBuffer, uint encodedLength, out string buffer);
+        void debugserver_decode_string(string encodedBuffer, System.UIntPtr encodedLength, out string buffer);
         
         /// <summary>
         /// Sets behavior when awaiting a response from the server.

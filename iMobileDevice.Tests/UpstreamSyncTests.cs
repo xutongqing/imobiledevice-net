@@ -1,15 +1,20 @@
 namespace iMobileDevice.Tests
 {
     using System;
+    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using iMobileDevice.Afc;
     using iMobileDevice.BtPacketLogger;
     using iMobileDevice.DebugServer;
+    using iMobileDevice.FileRelay;
     using iMobileDevice.iDevice;
+    using iMobileDevice.InstallationProxy;
     using iMobileDevice.Lockdown;
     using iMobileDevice.MobileImageMounter;
+    using iMobileDevice.MobileSync;
+    using iMobileDevice.NotificationProxy;
     using iMobileDevice.OsTrace;
     using iMobileDevice.Plist;
     using iMobileDevice.PropertyListService;
@@ -232,6 +237,76 @@ namespace iMobileDevice.Tests
             Assert.Equal(expectedLibrary, dllImport.Value);
             Assert.Equal(entryPoint, dllImport.EntryPoint);
             Assert.Equal(CallingConvention.Cdecl, dllImport.CallingConvention);
+        }
+
+        [Fact]
+        public void FixedAbiSignaturesMatchUpstreamHeaders()
+        {
+            // DebugServer: size_t* -> ref UIntPtr, size_t -> UIntPtr
+            var sendCmd = typeof(DebugServerNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "debugserver_client_send_command" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(UIntPtr).MakeByRefType(), sendCmd.GetParameters()[3].ParameterType);
+
+            var recvResp = typeof(DebugServerNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "debugserver_client_receive_response" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(UIntPtr).MakeByRefType(), recvResp.GetParameters()[2].ParameterType);
+
+            var decodeStr = typeof(DebugServerNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "debugserver_decode_string" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(UIntPtr), decodeStr.GetParameters()[1].ParameterType);
+
+            // MobileSync: anchors_new returns handle directly, anchors_free returns void
+            var anchorsNew = typeof(MobileSyncNativeMethods).GetMethod("mobilesync_anchors_new");
+            Assert.Equal(typeof(MobileSyncAnchorsHandle), anchorsNew.ReturnType);
+            Assert.Equal(2, anchorsNew.GetParameters().Length);
+
+            var anchorsFree = typeof(MobileSyncNativeMethods).GetMethod("mobilesync_anchors_free");
+            Assert.Equal(typeof(void), anchorsFree.ReturnType);
+
+            // Service: constructor_func passed by value (not ref)
+            var factoryStart = typeof(ServiceNativeMethods).GetMethod("service_client_factory_start_service");
+            var ctorParam = factoryStart.GetParameters()[4];
+            Assert.Equal(typeof(ConstructorFunc), ctorParam.ParameterType);
+            Assert.False(ctorParam.ParameterType.IsByRef);
+
+            // MobileImageMounter: size_t / ssize_t / uint
+            var uploadImg = typeof(MobileImageMounterNativeMethods).GetMethod("mobile_image_mounter_upload_image");
+            Assert.Equal(typeof(UIntPtr), uploadImg.GetParameters()[2].ParameterType);
+            Assert.Equal(typeof(uint), uploadImg.GetParameters()[4].ParameterType);
+
+            var mountImg = typeof(MobileImageMounterNativeMethods).GetMethod("mobile_image_mounter_mount_image");
+            Assert.Equal(typeof(uint), mountImg.GetParameters()[3].ParameterType);
+
+            var uploadCbInvoke = typeof(MobileImageMounterUploadCallBack).GetMethod("Invoke");
+            Assert.Equal(typeof(IntPtr), uploadCbInvoke.ReturnType);
+            Assert.Equal(typeof(UIntPtr), uploadCbInvoke.GetParameters()[1].ParameterType);
+
+            // Null-terminated input string arrays: native IntPtr by value, managed ReadOnlyCollection<string>
+            var frReq = typeof(FileRelayNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "file_relay_request_sources" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(IntPtr), frReq.GetParameters()[1].ParameterType);
+            Assert.NotNull(typeof(IFileRelayApi).GetMethod("file_relay_request_sources", new[] { typeof(FileRelayClientHandle), typeof(ReadOnlyCollection<string>), typeof(iDeviceConnectionHandle).MakeByRefType() }));
+
+            var frReqTimeout = typeof(FileRelayNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "file_relay_request_sources_timeout" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(IntPtr), frReqTimeout.GetParameters()[1].ParameterType);
+
+            var npObs = typeof(NotificationProxyNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "np_observe_notifications" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(IntPtr), npObs.GetParameters()[1].ParameterType);
+            Assert.NotNull(typeof(INotificationProxyApi).GetMethod("np_observe_notifications", new[] { typeof(NotificationProxyClientHandle), typeof(ReadOnlyCollection<string>) }));
+
+            var capMatch = typeof(InstallationProxyNativeMethods).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.Name == "instproxy_check_capabilities_match" && m.GetCustomAttribute<DllImportAttribute>() != null);
+            Assert.Equal(typeof(IntPtr), capMatch.GetParameters()[1].ParameterType);
+            Assert.NotNull(typeof(IInstallationProxyApi).GetMethod("instproxy_check_capabilities_match", new[] { typeof(InstallationProxyClientHandle), typeof(ReadOnlyCollection<string>), typeof(PlistHandle), typeof(PlistHandle).MakeByRefType() }));
+
+            // Public types & constants
+            Assert.NotNull(typeof(LockdownServiceDescriptor).GetField("identifier"));
+            Assert.Equal(typeof(IntPtr), typeof(LockdownServiceDescriptor).GetField("identifier").FieldType);
+            Assert.Equal(34, (int)AfcError.SslError);
+            Assert.Equal("com.apple.mobile.application_installed", NotificationProxyNotifications.AppInstalled);
+            Assert.Equal("com.apple.mobile.application_uninstalled", NotificationProxyNotifications.AppUninstalled);
         }
     }
 }

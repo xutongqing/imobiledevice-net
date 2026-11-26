@@ -7,6 +7,8 @@
 
 namespace iMobileDevice.OsTrace
 {
+    using System;
+    using System.Collections.Concurrent;
     using iMobileDevice.iDevice;
     using iMobileDevice.Lockdown;
     using iMobileDevice.Plist;
@@ -14,6 +16,9 @@ namespace iMobileDevice.OsTrace
     public partial class OsTraceApi : IOsTraceApi
     {
         private ILibiMobileDevice parent;
+
+        private readonly ConcurrentDictionary<IntPtr, OsTraceActivityCallBack> activeActivityCallbacks =
+            new ConcurrentDictionary<IntPtr, OsTraceActivityCallBack>();
 
         public OsTraceApi(ILibiMobileDevice parent)
         {
@@ -52,17 +57,36 @@ namespace iMobileDevice.OsTrace
 
         public virtual OsTraceError ostrace_client_free(System.IntPtr client)
         {
-            return OsTraceNativeMethods.ostrace_client_free(client);
+            OsTraceError returnValue = OsTraceNativeMethods.ostrace_client_free(client);
+            this.activeActivityCallbacks.TryRemove(client, out _);
+            return returnValue;
         }
 
         public virtual OsTraceError ostrace_start_activity(OsTraceClientHandle client, PlistHandle options, OsTraceActivityCallBack callback, System.IntPtr userData)
         {
-            return OsTraceNativeMethods.ostrace_start_activity(client, options, callback, userData);
+            IntPtr key = (client != null && !client.IsInvalid) ? client.DangerousGetHandle() : IntPtr.Zero;
+            if (key != IntPtr.Zero && callback != null)
+            {
+                this.activeActivityCallbacks[key] = callback;
+            }
+
+            OsTraceError returnValue = OsTraceNativeMethods.ostrace_start_activity(client, options, callback, userData);
+            if (returnValue != OsTraceError.Success && key != IntPtr.Zero)
+            {
+                this.activeActivityCallbacks.TryRemove(key, out _);
+            }
+
+            return returnValue;
         }
 
         public virtual OsTraceError ostrace_stop_activity(OsTraceClientHandle client)
         {
-            return OsTraceNativeMethods.ostrace_stop_activity(client);
+            OsTraceError returnValue = OsTraceNativeMethods.ostrace_stop_activity(client);
+            if (client != null && !client.IsInvalid)
+            {
+                this.activeActivityCallbacks.TryRemove(client.DangerousGetHandle(), out _);
+            }
+            return returnValue;
         }
 
         public virtual OsTraceError ostrace_get_pid_list(OsTraceClientHandle client, out PlistHandle list)
@@ -78,7 +102,9 @@ namespace iMobileDevice.OsTrace
 
         public virtual OsTraceError ostrace_create_archive(OsTraceClientHandle client, PlistHandle options, OsTraceArchiveWriteCallBack callback, System.IntPtr userData)
         {
-            return OsTraceNativeMethods.ostrace_create_archive(client, options, callback, userData);
+            OsTraceError returnValue = OsTraceNativeMethods.ostrace_create_archive(client, options, callback, userData);
+            GC.KeepAlive(callback);
+            return returnValue;
         }
     }
 }

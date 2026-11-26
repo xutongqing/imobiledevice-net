@@ -147,7 +147,7 @@ namespace iMobileDevice.MobileImageMounter
         /// MOBILE_IMAGE_MOUNTER_E_* error code otherwise.
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_upload_image", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern MobileImageMounterError mobile_image_mounter_upload_image(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, uint imageSize, byte[] signature, ushort signatureSize, MobileImageMounterUploadCallBack uploadCallBack, System.IntPtr userdata);
+        public static extern MobileImageMounterError mobile_image_mounter_upload_image(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, System.UIntPtr imageSize, byte[] signature, uint signatureSize, MobileImageMounterUploadCallBack uploadCallBack, System.IntPtr userdata);
         
         /// <summary>
         /// Mounts an image on the device.
@@ -184,7 +184,7 @@ namespace iMobileDevice.MobileImageMounter
         /// device is rebooted.
         /// </remarks>
         [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_mount_image", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern MobileImageMounterError mobile_image_mounter_mount_image(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imagePath, byte[] signature, ushort signatureSize, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, out PlistHandle result);
+        public static extern MobileImageMounterError mobile_image_mounter_mount_image(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imagePath, byte[] signature, uint signatureSize, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, out PlistHandle result);
         
         /// <summary>
         /// Hangs up the connection to the mobile_image_mounter service.

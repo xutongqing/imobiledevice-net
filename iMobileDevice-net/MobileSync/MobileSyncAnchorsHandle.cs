@@ -84,7 +84,8 @@ namespace iMobileDevice.MobileSync
         {
             Debug.WriteLine($"Releasing {this.GetType().Name} {this.handle} using {this.Api}. This object was created at {this.creationStackTrace}");
             Debug.Assert(this.Api != null, $"An instance of {this.GetType().Name} is being released but is not tied to an instance of the API.");
-            return (this.Api.MobileSync.mobilesync_anchors_free(this.handle) == MobileSyncError.Success);
+            this.Api.MobileSync.mobilesync_anchors_free(this.handle);
+            return true;
         }
         
         /// <summary>

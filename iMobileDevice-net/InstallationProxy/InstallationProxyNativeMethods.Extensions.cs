@@ -31,18 +31,28 @@ namespace iMobileDevice.InstallationProxy
         {
             System.Runtime.InteropServices.ICustomMarshaler appidsMarshaler = NativeStringArrayMarshaler.GetInstance(null);
             System.IntPtr appidsNative = appidsMarshaler.MarshalManagedToNative(appids);
-            InstallationProxyError returnValue = InstallationProxyNativeMethods.instproxy_lookup(client, appidsNative, clientOptions, out result);
-            return returnValue;
+            try
+            {
+                return InstallationProxyNativeMethods.instproxy_lookup(client, appidsNative, clientOptions, out result);
+            }
+            finally
+            {
+                appidsMarshaler.CleanUpNativeData(appidsNative);
+            }
         }
         
-        public static InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, out string capabilities, PlistHandle clientOptions, out PlistHandle result)
+        public static InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, System.Collections.ObjectModel.ReadOnlyCollection<string> capabilities, PlistHandle clientOptions, out PlistHandle result)
         {
-            System.Runtime.InteropServices.ICustomMarshaler capabilitiesMarshaler = NativeStringMarshaler.GetInstance(null);
-            System.IntPtr capabilitiesNative = System.IntPtr.Zero;
-            InstallationProxyError returnValue = InstallationProxyNativeMethods.instproxy_check_capabilities_match(client, out capabilitiesNative, clientOptions, out result);
-            capabilities = ((string)capabilitiesMarshaler.MarshalNativeToManaged(capabilitiesNative));
-            capabilitiesMarshaler.CleanUpNativeData(capabilitiesNative);
-            return returnValue;
+            System.Runtime.InteropServices.ICustomMarshaler capabilitiesMarshaler = NativeStringArrayMarshaler.GetInstance(null);
+            System.IntPtr capabilitiesNative = capabilitiesMarshaler.MarshalManagedToNative(capabilities);
+            try
+            {
+                return InstallationProxyNativeMethods.instproxy_check_capabilities_match(client, capabilitiesNative, clientOptions, out result);
+            }
+            finally
+            {
+                capabilitiesMarshaler.CleanUpNativeData(capabilitiesNative);
+            }
         }
         
         public static void instproxy_command_get_name(PlistHandle command, out string name)

@@ -323,16 +323,15 @@ namespace iMobileDevice.MobileSync
         /// Pointer that will be set to a newly allocated
         /// #mobilesync_anchors_t struct. Must be freed using mobilesync_anchors_free().
         /// </param>
-        MobileSyncError mobilesync_anchors_new(string deviceAnchor, string computerAnchor, out MobileSyncAnchorsHandle anchor);
+        MobileSyncAnchorsHandle mobilesync_anchors_new(string deviceAnchor, string computerAnchor);
         
         /// <summary>
         /// Free memory used by anchors.
-        /// MOBILESYNC_E_SUCCESS on success
         /// </summary>
         /// <param name="anchors">
         /// The anchors to free.
         /// </param>
-        MobileSyncError mobilesync_anchors_free(System.IntPtr anchors);
+        void mobilesync_anchors_free(System.IntPtr anchors);
         
         /// <summary>
         /// Create a new actions plist to use in mobilesync_send_changes().
@@ -359,6 +358,8 @@ namespace iMobileDevice.MobileSync
         /// link submitted changes and report remapped identifiers.
         /// </remarks>
         void mobilesync_actions_add(PlistHandle actions);
+        
+        void mobilesync_actions_add(PlistHandle actions, System.Collections.Generic.IEnumerable<string> entityNames, bool? allRecordsOfPulledEntityTypeSent = null);
         
         /// <summary>
         /// Free actions plist.

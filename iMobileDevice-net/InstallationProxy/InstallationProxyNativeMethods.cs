@@ -431,7 +431,7 @@ namespace iMobileDevice.InstallationProxy
         /// an error occurred.
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(InstallationProxyNativeMethods.LibraryName, EntryPoint="instproxy_check_capabilities_match", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, out System.IntPtr capabilities, PlistHandle clientOptions, out PlistHandle result);
+        public static extern InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, System.IntPtr capabilities, PlistHandle clientOptions, out PlistHandle result);
         
         /// <summary>
         /// Gets the name from a command dictionary.

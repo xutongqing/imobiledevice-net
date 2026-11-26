@@ -404,24 +404,25 @@ namespace iMobileDevice.MobileSync
         /// Pointer that will be set to a newly allocated
         /// #mobilesync_anchors_t struct. Must be freed using mobilesync_anchors_free().
         /// </param>
-        public virtual MobileSyncError mobilesync_anchors_new(string deviceAnchor, string computerAnchor, out MobileSyncAnchorsHandle anchor)
+        public virtual MobileSyncAnchorsHandle mobilesync_anchors_new(string deviceAnchor, string computerAnchor)
         {
-            MobileSyncError returnValue;
-            returnValue = MobileSyncNativeMethods.mobilesync_anchors_new(deviceAnchor, computerAnchor, out anchor);
-            anchor.Api = this.Parent;
+            MobileSyncAnchorsHandle returnValue = MobileSyncNativeMethods.mobilesync_anchors_new(deviceAnchor, computerAnchor);
+            if (returnValue != null)
+            {
+                returnValue.Api = this.Parent;
+            }
             return returnValue;
         }
         
         /// <summary>
         /// Free memory used by anchors.
-        /// MOBILESYNC_E_SUCCESS on success
         /// </summary>
         /// <param name="anchors">
         /// The anchors to free.
         /// </param>
-        public virtual MobileSyncError mobilesync_anchors_free(System.IntPtr anchors)
+        public virtual void mobilesync_anchors_free(System.IntPtr anchors)
         {
-            return MobileSyncNativeMethods.mobilesync_anchors_free(anchors);
+            MobileSyncNativeMethods.mobilesync_anchors_free(anchors);
         }
         
         /// <summary>
@@ -456,7 +457,39 @@ namespace iMobileDevice.MobileSync
         /// </remarks>
         public virtual void mobilesync_actions_add(PlistHandle actions)
         {
-            MobileSyncNativeMethods.mobilesync_actions_add(actions);
+            // No-op: calling C variadic mobilesync_actions_add without a NULL terminator is unsafe.
+        }
+        
+        public virtual void mobilesync_actions_add(PlistHandle actions, System.Collections.Generic.IEnumerable<string> entityNames, bool? allRecordsOfPulledEntityTypeSent = null)
+        {
+            if (actions == null || actions.IsInvalid)
+            {
+                return;
+            }
+
+            if (entityNames != null)
+            {
+                PlistHandle array = this.Parent.Plist.plist_new_array();
+                foreach (string entityName in entityNames)
+                {
+                    if (entityName != null)
+                    {
+                        PlistHandle item = this.Parent.Plist.plist_new_string(entityName);
+                        this.Parent.Plist.plist_array_append_item(array, item);
+                        item.SetHandleAsInvalid();
+                    }
+                }
+
+                this.Parent.Plist.plist_dict_set_item(actions, "SyncDeviceLinkEntityNamesKey", array);
+                array.SetHandleAsInvalid();
+            }
+
+            if (allRecordsOfPulledEntityTypeSent.HasValue)
+            {
+                PlistHandle flag = this.Parent.Plist.plist_new_bool(allRecordsOfPulledEntityTypeSent.Value ? (char)1 : (char)0);
+                this.Parent.Plist.plist_dict_set_item(actions, "SyncDeviceLinkAllRecordsOfPulledEntityTypeSentKey", flag);
+                flag.SetHandleAsInvalid();
+            }
         }
         
         /// <summary>

@@ -78,7 +78,7 @@ namespace iMobileDevice.Service
         /// SERVICE_E_SUCCESS on success, or a SERVICE_E_* error code
         /// otherwise.
         /// </returns>
-        ServiceError service_client_factory_start_service(iDeviceHandle device, string serviceName, ref System.IntPtr client, string label, ref ConstructorFunc constructorFunc, ref int errorCode);
+        ServiceError service_client_factory_start_service(iDeviceHandle device, string serviceName, ref System.IntPtr client, string label, ConstructorFunc constructorFunc, ref int errorCode);
         
         /// <summary>
         /// Frees a service instance.

@@ -39,7 +39,7 @@ namespace iMobileDevice.Tests
         public void DebugServerClientReceiveResponseZero()
         {
             string response;
-            uint responseSize = 0;
+            UIntPtr responseSize = UIntPtr.Zero;
             Assert.Equal(DebugServerError.InvalidArg, this.api.DebugServer.debugserver_client_receive_response(DebugServerClientHandle.Zero, out response, ref responseSize));
         }
 
@@ -60,7 +60,7 @@ namespace iMobileDevice.Tests
         [Fact(Skip = "debugserver_client_send_command does not check for null values")]
         public void DebugServerClientSendCommandZero()
         {
-            uint responseSize = 0;
+            UIntPtr responseSize = UIntPtr.Zero;
             Assert.Equal(DebugServerError.InvalidArg, this.api.DebugServer.debugserver_client_send_command(DebugServerClientHandle.Zero, DebugServerCommandHandle.Zero, out string response, ref responseSize));
         }
 
@@ -108,7 +108,7 @@ namespace iMobileDevice.Tests
         public void DebugServerDecodeString()
         {
             var encodedString = "7175616D6F74696F6E";
-            this.api.DebugServer.debugserver_decode_string(encodedString, (uint)encodedString.Length, out string buffer);
+            this.api.DebugServer.debugserver_decode_string(encodedString, (UIntPtr)encodedString.Length, out string buffer);
             Assert.Equal("quamotion", buffer);
         }
 

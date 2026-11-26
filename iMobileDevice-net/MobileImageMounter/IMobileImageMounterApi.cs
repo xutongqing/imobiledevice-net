@@ -143,7 +143,7 @@ namespace iMobileDevice.MobileImageMounter
         /// MOBILE_IMAGE_MOUNTER_E_SUCCESS on succes, or a
         /// MOBILE_IMAGE_MOUNTER_E_* error code otherwise.
         /// </returns>
-        MobileImageMounterError mobile_image_mounter_upload_image(MobileImageMounterClientHandle client, string imageType, uint imageSize, byte[] signature, ushort signatureSize, MobileImageMounterUploadCallBack uploadCallBack, System.IntPtr userdata);
+        MobileImageMounterError mobile_image_mounter_upload_image(MobileImageMounterClientHandle client, string imageType, System.UIntPtr imageSize, byte[] signature, uint signatureSize, MobileImageMounterUploadCallBack uploadCallBack, System.IntPtr userdata);
         
         /// <summary>
         /// Mounts an image on the device.
@@ -179,7 +179,7 @@ namespace iMobileDevice.MobileImageMounter
         /// Note that there is no unmounting function. The mount persists until the
         /// device is rebooted.
         /// </remarks>
-        MobileImageMounterError mobile_image_mounter_mount_image(MobileImageMounterClientHandle client, string imagePath, byte[] signature, ushort signatureSize, string imageType, out PlistHandle result);
+        MobileImageMounterError mobile_image_mounter_mount_image(MobileImageMounterClientHandle client, string imagePath, byte[] signature, uint signatureSize, string imageType, out PlistHandle result);
         
         /// <summary>
         /// Hangs up the connection to the mobile_image_mounter service.

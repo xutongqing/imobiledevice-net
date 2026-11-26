@@ -25,5 +25,5 @@ namespace iMobileDevice.MobileImageMounter
     
     
     [System.Runtime.InteropServices.UnmanagedFunctionPointerAttribute(System.Runtime.InteropServices.CallingConvention.Cdecl)]
-    public delegate int MobileImageMounterUploadCallBack(System.IntPtr buffer, uint length, System.IntPtr userData);
+    public delegate System.IntPtr MobileImageMounterUploadCallBack(System.IntPtr buffer, System.UIntPtr length, System.IntPtr userData);
 }

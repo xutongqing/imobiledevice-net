@@ -339,17 +339,16 @@ namespace iMobileDevice.MobileSync
         /// #mobilesync_anchors_t struct. Must be freed using mobilesync_anchors_free().
         /// </param>
         [System.Runtime.InteropServices.DllImportAttribute(MobileSyncNativeMethods.LibraryName, EntryPoint="mobilesync_anchors_new", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern MobileSyncError mobilesync_anchors_new([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string deviceAnchor, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string computerAnchor, out MobileSyncAnchorsHandle anchor);
+        public static extern MobileSyncAnchorsHandle mobilesync_anchors_new([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string deviceAnchor, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string computerAnchor);
         
         /// <summary>
         /// Free memory used by anchors.
-        /// MOBILESYNC_E_SUCCESS on success
         /// </summary>
         /// <param name="anchors">
         /// The anchors to free.
         /// </param>
         [System.Runtime.InteropServices.DllImportAttribute(MobileSyncNativeMethods.LibraryName, EntryPoint="mobilesync_anchors_free", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern MobileSyncError mobilesync_anchors_free(System.IntPtr anchors);
+        public static extern void mobilesync_anchors_free(System.IntPtr anchors);
         
         /// <summary>
         /// Create a new actions plist to use in mobilesync_send_changes().

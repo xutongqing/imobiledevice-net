@@ -1,13 +1,18 @@
 namespace iMobileDevice.Tests
 {
     using System;
+    using System.Collections.ObjectModel;
     using System.Runtime.InteropServices;
     using iMobileDevice.Afc;
     using iMobileDevice.BtPacketLogger;
+    using iMobileDevice.FileRelay;
     using iMobileDevice.iDevice;
+    using iMobileDevice.InstallationProxy;
+    using iMobileDevice.NotificationProxy;
     using iMobileDevice.OsTrace;
     using iMobileDevice.Plist;
     using iMobileDevice.ReverseProxy;
+    using iMobileDevice.Screenshotr;
     using Xunit;
 
     /// <summary>
@@ -94,6 +99,68 @@ namespace iMobileDevice.Tests
                     Assert.Equal(-42, api.Plist.plist_dict_get_int(parsed, "val"));
                 }
             }
+        }
+
+        [Fact]
+        public void FixedNativeSignaturesAndHelpersWorkEndToEnd()
+        {
+            if (!ShouldRun)
+            {
+                return;
+            }
+
+            var api = new LibiMobileDevice();
+
+            // MobileSync anchors_new returns handle directly, anchors_free returns void
+            using (var anchors = api.MobileSync.mobilesync_anchors_new("device-anchor-1", "computer-anchor-1"))
+            {
+                Assert.NotNull(anchors);
+                Assert.False(anchors.IsInvalid);
+                Assert.Same(api, anchors.Api);
+            }
+
+            // DebugServer size_t decode_string
+            string encoded = "7175616D6F74696F6E";
+            api.DebugServer.debugserver_decode_string(encoded, (UIntPtr)encoded.Length, out string decoded);
+            Assert.Equal("quamotion", decoded);
+
+            // InstallationProxy return attributes helper
+            using (var opts = api.InstallationProxy.instproxy_client_options_new())
+            {
+                api.InstallationProxy.instproxy_client_options_set_return_attributes(opts, "CFBundleIdentifier", "Path");
+                uint len = 0;
+                Assert.Equal(PlistError.Success, api.Plist.plist_to_json(opts, out string json, ref len, 0));
+                Assert.Contains("ReturnAttributes", json);
+                Assert.Contains("CFBundleIdentifier", json);
+                Assert.Contains("Path", json);
+            }
+
+            // MobileSync actions_add helper
+            using (var actions = api.MobileSync.mobilesync_actions_new())
+            {
+                api.MobileSync.mobilesync_actions_add(actions, new[] { "com.apple.Contacts" }, true);
+                uint len = 0;
+                Assert.Equal(PlistError.Success, api.Plist.plist_to_json(actions, out string json, ref len, 0));
+                Assert.Contains("SyncDeviceLinkEntityNamesKey", json);
+                Assert.Contains("com.apple.Contacts", json);
+                Assert.Contains("SyncDeviceLinkAllRecordsOfPulledEntityTypeSentKey", json);
+            }
+
+            // Input string-array APIs reject zero handle cleanly with InvalidArg (no crash/marshal error)
+            Assert.Equal(
+                FileRelayError.InvalidArg,
+                api.FileRelay.file_relay_request_sources(FileRelayClientHandle.Zero, new ReadOnlyCollection<string>(new[] { "WiFi" }), out _));
+
+            Assert.Equal(
+                NotificationProxyError.InvalidArg,
+                api.NotificationProxy.np_observe_notifications(NotificationProxyClientHandle.Zero, new ReadOnlyCollection<string>(new[] { NotificationProxyNotifications.AppInstalled })));
+
+            Assert.Equal(
+                InstallationProxyError.InvalidArg,
+                api.InstallationProxy.instproxy_check_capabilities_match(InstallationProxyClientHandle.Zero, new ReadOnlyCollection<string>(new[] { "arm64" }), PlistHandle.Zero, out _));
+
+            // Screenshotr fallback free works on upstream libimobiledevice without EntryPointNotFoundException
+            Assert.Equal(ScreenshotrError.Success, api.Screenshotr.screenshotr_screenshot_free(IntPtr.Zero));
         }
     }
 }

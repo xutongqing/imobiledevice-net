@@ -79,7 +79,7 @@ namespace iMobileDevice.Service
         /// otherwise.
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(ServiceNativeMethods.LibraryName, EntryPoint="service_client_factory_start_service", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern ServiceError service_client_factory_start_service(iDeviceHandle device, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string serviceName, ref System.IntPtr client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string label, ref ConstructorFunc constructorFunc, ref int errorCode);
+        public static extern ServiceError service_client_factory_start_service(iDeviceHandle device, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string serviceName, ref System.IntPtr client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string label, ConstructorFunc constructorFunc, ref int errorCode);
         
         /// <summary>
         /// Frees a service instance.

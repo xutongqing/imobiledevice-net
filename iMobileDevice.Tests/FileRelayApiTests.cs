@@ -35,13 +35,13 @@ namespace iMobileDevice.Tests
         [Fact]
         public void FileRelayRequestSourcesZero()
         {
-            Assert.Equal(FileRelayError.InvalidArg, this.api.FileRelay.file_relay_request_sources(FileRelayClientHandle.Zero, out string sources, out iDeviceConnectionHandle connection));
+            Assert.Equal(FileRelayError.InvalidArg, this.api.FileRelay.file_relay_request_sources(FileRelayClientHandle.Zero, new System.Collections.ObjectModel.ReadOnlyCollection<string>(Array.Empty<string>()), out iDeviceConnectionHandle connection));
         }
 
         [Fact]
         public void FileRelayRequestSourcesTimeoutZero()
         {
-            Assert.Equal(FileRelayError.InvalidArg, this.api.FileRelay.file_relay_request_sources_timeout(FileRelayClientHandle.Zero, out string sources, out iDeviceConnectionHandle connection, 0));
+            Assert.Equal(FileRelayError.InvalidArg, this.api.FileRelay.file_relay_request_sources_timeout(FileRelayClientHandle.Zero, new System.Collections.ObjectModel.ReadOnlyCollection<string>(Array.Empty<string>()), out iDeviceConnectionHandle connection, 0));
         }
     }
 }

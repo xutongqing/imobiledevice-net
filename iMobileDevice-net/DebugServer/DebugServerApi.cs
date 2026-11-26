@@ -223,7 +223,7 @@ namespace iMobileDevice.DebugServer
         /// DEBUGSERVER_E_SUCCESS on success,
         /// DEBUGSERVER_E_INVALID_ARG when client or command is NULL
         /// </returns>
-        public virtual DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out string response, ref uint responseSize)
+        public virtual DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out string response, ref System.UIntPtr responseSize)
         {
             return DebugServerNativeMethods.debugserver_client_send_command(client, command, out response, ref responseSize);
         }
@@ -244,7 +244,7 @@ namespace iMobileDevice.DebugServer
         /// DEBUGSERVER_E_SUCCESS on success,
         /// DEBUGSERVER_E_INVALID_ARG when client is NULL
         /// </returns>
-        public virtual DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out string response, ref uint responseSize)
+        public virtual DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out string response, ref System.UIntPtr responseSize)
         {
             return DebugServerNativeMethods.debugserver_client_receive_response(client, out response, ref responseSize);
         }
@@ -384,7 +384,7 @@ namespace iMobileDevice.DebugServer
         /// <param name="buffer">
         /// Decoded string to be freed by the caller
         /// </param>
-        public virtual void debugserver_decode_string(string encodedBuffer, uint encodedLength, out string buffer)
+        public virtual void debugserver_decode_string(string encodedBuffer, System.UIntPtr encodedLength, out string buffer)
         {
             DebugServerNativeMethods.debugserver_decode_string(encodedBuffer, encodedLength, out buffer);
         }

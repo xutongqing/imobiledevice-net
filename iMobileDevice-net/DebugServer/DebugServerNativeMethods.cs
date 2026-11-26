@@ -188,7 +188,7 @@ namespace iMobileDevice.DebugServer
         /// DEBUGSERVER_E_INVALID_ARG when client or command is NULL
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(DebugServerNativeMethods.LibraryName, EntryPoint="debugserver_client_send_command", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out System.IntPtr response, ref uint responseSize);
+        public static extern DebugServerError debugserver_client_send_command(DebugServerClientHandle client, DebugServerCommandHandle command, out System.IntPtr response, ref System.UIntPtr responseSize);
         
         /// <summary>
         /// Receives and parses response of debugserver service.
@@ -207,7 +207,7 @@ namespace iMobileDevice.DebugServer
         /// DEBUGSERVER_E_INVALID_ARG when client is NULL
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(DebugServerNativeMethods.LibraryName, EntryPoint="debugserver_client_receive_response", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out System.IntPtr response, ref uint responseSize);
+        public static extern DebugServerError debugserver_client_receive_response(DebugServerClientHandle client, out System.IntPtr response, ref System.UIntPtr responseSize);
         
         /// <summary>
         /// Controls status of ACK mode when sending commands or receiving responses.
@@ -330,7 +330,7 @@ namespace iMobileDevice.DebugServer
         /// Decoded string to be freed by the caller
         /// </param>
         [System.Runtime.InteropServices.DllImportAttribute(DebugServerNativeMethods.LibraryName, EntryPoint="debugserver_decode_string", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        public static extern void debugserver_decode_string([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string encodedBuffer, uint encodedLength, out System.IntPtr buffer);
+        public static extern void debugserver_decode_string([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string encodedBuffer, System.UIntPtr encodedLength, out System.IntPtr buffer);
         
         /// <summary>
         /// Sets behavior when awaiting a response from the server.

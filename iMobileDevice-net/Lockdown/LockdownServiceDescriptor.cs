@@ -31,5 +31,7 @@ namespace iMobileDevice.Lockdown
         public ushort port;
         
         public char ssl_enabled;
+        
+        public System.IntPtr identifier;
     }
 }

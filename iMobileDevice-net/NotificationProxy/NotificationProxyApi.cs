@@ -170,9 +170,9 @@ namespace iMobileDevice.NotificationProxy
         /// NP_E_SUCCESS on success, NP_E_INVALID_ARG when client is null,
         /// or an error returned by np_observe_notification.
         /// </returns>
-        public virtual NotificationProxyError np_observe_notifications(NotificationProxyClientHandle client, out string notificationSpec)
+        public virtual NotificationProxyError np_observe_notifications(NotificationProxyClientHandle client, System.Collections.ObjectModel.ReadOnlyCollection<string> notificationSpec)
         {
-            return NotificationProxyNativeMethods.np_observe_notifications(client, out notificationSpec);
+            return NotificationProxyNativeMethods.np_observe_notifications(client, notificationSpec);
         }
         
         /// <summary>

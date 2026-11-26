@@ -7,11 +7,22 @@
 
 namespace iMobileDevice.ReverseProxy
 {
+    using System;
+    using System.Collections.Concurrent;
     using iMobileDevice.iDevice;
 
     public partial class ReverseProxyApi : IReverseProxyApi
     {
         private ILibiMobileDevice parent;
+
+        private readonly ConcurrentDictionary<IntPtr, ReverseProxyStatusCallBack> activeStatusCallbacks =
+            new ConcurrentDictionary<IntPtr, ReverseProxyStatusCallBack>();
+
+        private readonly ConcurrentDictionary<IntPtr, ReverseProxyLogCallBack> activeLogCallbacks =
+            new ConcurrentDictionary<IntPtr, ReverseProxyLogCallBack>();
+
+        private readonly ConcurrentDictionary<IntPtr, ReverseProxyDataCallBack> activeDataCallbacks =
+            new ConcurrentDictionary<IntPtr, ReverseProxyDataCallBack>();
 
         public ReverseProxyApi(ILibiMobileDevice parent)
         {
@@ -50,7 +61,11 @@ namespace iMobileDevice.ReverseProxy
 
         public virtual ReverseProxyError reverse_proxy_client_free(System.IntPtr client)
         {
-            return ReverseProxyNativeMethods.reverse_proxy_client_free(client);
+            ReverseProxyError returnValue = ReverseProxyNativeMethods.reverse_proxy_client_free(client);
+            this.activeStatusCallbacks.TryRemove(client, out _);
+            this.activeLogCallbacks.TryRemove(client, out _);
+            this.activeDataCallbacks.TryRemove(client, out _);
+            return returnValue;
         }
 
         public virtual ReverseProxyError reverse_proxy_client_start_proxy(ReverseProxyClientHandle client, int controlProtocolVersion)
@@ -60,16 +75,55 @@ namespace iMobileDevice.ReverseProxy
 
         public virtual void reverse_proxy_client_set_status_callback(ReverseProxyClientHandle client, ReverseProxyStatusCallBack callback, System.IntPtr userData)
         {
+            if (client != null && !client.IsInvalid)
+            {
+                IntPtr key = client.DangerousGetHandle();
+                if (callback != null)
+                {
+                    this.activeStatusCallbacks[key] = callback;
+                }
+                else
+                {
+                    this.activeStatusCallbacks.TryRemove(key, out _);
+                }
+            }
+
             ReverseProxyNativeMethods.reverse_proxy_client_set_status_callback(client, callback, userData);
         }
 
         public virtual void reverse_proxy_client_set_log_callback(ReverseProxyClientHandle client, ReverseProxyLogCallBack callback, System.IntPtr userData)
         {
+            if (client != null && !client.IsInvalid)
+            {
+                IntPtr key = client.DangerousGetHandle();
+                if (callback != null)
+                {
+                    this.activeLogCallbacks[key] = callback;
+                }
+                else
+                {
+                    this.activeLogCallbacks.TryRemove(key, out _);
+                }
+            }
+
             ReverseProxyNativeMethods.reverse_proxy_client_set_log_callback(client, callback, userData);
         }
 
         public virtual void reverse_proxy_client_set_data_callback(ReverseProxyClientHandle client, ReverseProxyDataCallBack callback, System.IntPtr userData)
         {
+            if (client != null && !client.IsInvalid)
+            {
+                IntPtr key = client.DangerousGetHandle();
+                if (callback != null)
+                {
+                    this.activeDataCallbacks[key] = callback;
+                }
+                else
+                {
+                    this.activeDataCallbacks.TryRemove(key, out _);
+                }
+            }
+
             ReverseProxyNativeMethods.reverse_proxy_client_set_data_callback(client, callback, userData);
         }
 

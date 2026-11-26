@@ -489,11 +489,14 @@ namespace iMobileDevice.InstallationProxy
         /// INSTPROXY_E_SUCCESS on success or an INSTPROXY_E_* error value if
         /// an error occurred.
         /// </returns>
-        public virtual InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, out string capabilities, PlistHandle clientOptions, out PlistHandle result)
+        public virtual InstallationProxyError instproxy_check_capabilities_match(InstallationProxyClientHandle client, System.Collections.ObjectModel.ReadOnlyCollection<string> capabilities, PlistHandle clientOptions, out PlistHandle result)
         {
             InstallationProxyError returnValue;
-            returnValue = InstallationProxyNativeMethods.instproxy_check_capabilities_match(client, out capabilities, clientOptions, out result);
-            result.Api = this.Parent;
+            returnValue = InstallationProxyNativeMethods.instproxy_check_capabilities_match(client, capabilities, clientOptions, out result);
+            if (result != null)
+            {
+                result.Api = this.Parent;
+            }
             return returnValue;
         }
         
@@ -642,7 +645,32 @@ namespace iMobileDevice.InstallationProxy
         /// </remarks>
         public virtual void instproxy_client_options_set_return_attributes(PlistHandle clientOptions)
         {
-            InstallationProxyNativeMethods.instproxy_client_options_set_return_attributes(clientOptions);
+            this.instproxy_client_options_set_return_attributes(clientOptions, System.Array.Empty<string>());
+        }
+        
+        public virtual void instproxy_client_options_set_return_attributes(PlistHandle clientOptions, params string[] attributes)
+        {
+            if (clientOptions == null || clientOptions.IsInvalid)
+            {
+                return;
+            }
+
+            PlistHandle returnAttributes = this.Parent.Plist.plist_new_array();
+            if (attributes != null)
+            {
+                foreach (string attribute in attributes)
+                {
+                    if (attribute != null)
+                    {
+                        PlistHandle item = this.Parent.Plist.plist_new_string(attribute);
+                        this.Parent.Plist.plist_array_append_item(returnAttributes, item);
+                        item.SetHandleAsInvalid();
+                    }
+                }
+            }
+
+            this.Parent.Plist.plist_dict_set_item(clientOptions, "ReturnAttributes", returnAttributes);
+            returnAttributes.SetHandleAsInvalid();
         }
         
         /// <summary>

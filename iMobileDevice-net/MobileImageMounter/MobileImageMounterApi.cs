@@ -181,7 +181,7 @@ namespace iMobileDevice.MobileImageMounter
         /// MOBILE_IMAGE_MOUNTER_E_SUCCESS on succes, or a
         /// MOBILE_IMAGE_MOUNTER_E_* error code otherwise.
         /// </returns>
-        public virtual MobileImageMounterError mobile_image_mounter_upload_image(MobileImageMounterClientHandle client, string imageType, uint imageSize, byte[] signature, ushort signatureSize, MobileImageMounterUploadCallBack uploadCallBack, System.IntPtr userdata)
+        public virtual MobileImageMounterError mobile_image_mounter_upload_image(MobileImageMounterClientHandle client, string imageType, System.UIntPtr imageSize, byte[] signature, uint signatureSize, MobileImageMounterUploadCallBack uploadCallBack, System.IntPtr userdata)
         {
             return MobileImageMounterNativeMethods.mobile_image_mounter_upload_image(client, imageType, imageSize, signature, signatureSize, uploadCallBack, userdata);
         }
@@ -220,7 +220,7 @@ namespace iMobileDevice.MobileImageMounter
         /// Note that there is no unmounting function. The mount persists until the
         /// device is rebooted.
         /// </remarks>
-        public virtual MobileImageMounterError mobile_image_mounter_mount_image(MobileImageMounterClientHandle client, string imagePath, byte[] signature, ushort signatureSize, string imageType, out PlistHandle result)
+        public virtual MobileImageMounterError mobile_image_mounter_mount_image(MobileImageMounterClientHandle client, string imagePath, byte[] signature, uint signatureSize, string imageType, out PlistHandle result)
         {
             MobileImageMounterError returnValue;
             returnValue = MobileImageMounterNativeMethods.mobile_image_mounter_mount_image(client, imagePath, signature, signatureSize, imageType, out result);
