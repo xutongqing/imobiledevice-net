@@ -20,8 +20,28 @@ namespace iMobileDevice
             return;
         }
 
+        private static bool useLegacyPinvokeFree;
+
         public void CleanUpNativeData(IntPtr nativeData)
         {
+            if (nativeData == IntPtr.Zero)
+            {
+                return;
+            }
+
+            if (!useLegacyPinvokeFree)
+            {
+                try
+                {
+                    LibiMobileDevice.Instance.Plist.plist_mem_free(nativeData);
+                    return;
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    useLegacyPinvokeFree = true;
+                }
+            }
+
             LibiMobileDevice.Instance.Pinvoke.pinvoke_free_string(nativeData).ThrowOnError();
         }
 

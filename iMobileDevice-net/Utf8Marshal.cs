@@ -47,12 +47,24 @@ namespace iMobileDevice
                 throw new ArgumentNullException(nameof(api));
             }
 
-            ulong size = 0;
-            api.Pinvoke.pinvoke_get_string_length(value, out size);
+#if !NETCOREAPP2_0 && !NETSTANDARD2_0 && !NET45
+            return Marshal.PtrToStringUTF8(value);
+#else
+            int size = 0;
+            while (Marshal.ReadByte(value, size) != 0)
+            {
+                size++;
+            }
+
+            if (size == 0)
+            {
+                return string.Empty;
+            }
+
             byte[] data = new byte[size];
-            Marshal.Copy(value, data, 0, (int)size);
-            string result = Encoding.UTF8.GetString(data);
-            return result;
+            Marshal.Copy(value, data, 0, size);
+            return Encoding.UTF8.GetString(data);
+#endif
         }
 
         /// <summary>

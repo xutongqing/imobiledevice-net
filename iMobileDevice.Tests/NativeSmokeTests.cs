@@ -84,6 +84,10 @@ namespace iMobileDevice.Tests
                 Assert.Equal(PlistError.Success, api.Plist.plist_to_json(dict, out string json, ref len, 0));
                 Assert.Contains("-42", json);
 
+                uint xmlLen = 0;
+                api.Plist.plist_to_xml(dict, out string xml, ref xmlLen);
+                Assert.Contains("-42", xml);
+
                 Assert.Equal(PlistError.Success, api.Plist.plist_from_json(json, (uint)json.Length, out PlistHandle parsed));
                 using (parsed)
                 {
