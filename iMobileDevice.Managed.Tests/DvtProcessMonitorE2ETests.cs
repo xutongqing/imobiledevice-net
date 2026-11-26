@@ -46,6 +46,52 @@ public class DvtProcessMonitorE2ETests(ITestOutputHelper output)
     }
 
     [UsbDeviceFact]
+    public async Task MonitorApplicationByBundleIdentifier()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var device = await SelectDeviceAsync(new UsbmuxdClient(), timeout.Token);
+        await using var client = await DvtClient.ConnectUsbAsync(device.SerialNumber, timeout.Token);
+        const string springBoard = "com.apple.springboard";
+        int? pid = await client.GetApplicationProcessIdAsync(springBoard, timeout.Token);
+        Assert.True(pid > 0);
+        var running = await client.ListProcessesAsync(timeout.Token);
+        Assert.Contains(running, p => p.ProcessId == pid && p.Name == "SpringBoard");
+        Assert.Contains(running, p => !string.IsNullOrEmpty(p.BundleIdentifier));
+
+        using var sampling = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token);
+        await using var samples = client.WatchApplicationAsync(springBoard, 500, sampling.Token).GetAsyncEnumerator();
+        int measured = 0;
+        for (int i = 0; i < 6; i++)
+        {
+            Assert.True(await samples.MoveNextAsync());
+            Assert.Equal(pid, samples.Current.ProcessId);
+            if (samples.Current.Measurement is { } row)
+            {
+                Assert.Equal(pid, row.ProcessId);
+                Assert.Equal("SpringBoard", row.Name);
+                if (row is { CpuPercent: >= 0, PhysicalFootprintBytes: > 0 })
+                {
+                    measured++;
+                }
+            }
+        }
+        Assert.True(measured > 0);
+        output.WriteLine($"Received CPU and physical footprint for SpringBoard in {measured}/6 batches.");
+        sampling.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => samples.MoveNextAsync().AsTask());
+
+        string absentBundle = $"org.example.imobiledevice.absent-{Guid.NewGuid():N}";
+        Assert.Null(await client.GetApplicationProcessIdAsync(absentBundle, timeout.Token));
+        await using (var absent = client.WatchApplicationAsync(absentBundle, 500, timeout.Token).GetAsyncEnumerator())
+        {
+            Assert.True(await absent.MoveNextAsync());
+            Assert.Null(absent.Current.ProcessId);
+            Assert.Null(absent.Current.Measurement);
+        }
+        Assert.Equal(pid, await client.GetApplicationProcessIdAsync(springBoard, timeout.Token));
+    }
+
+    [UsbDeviceFact]
     public async Task LosingTheUsbTransportEndsSampling()
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));

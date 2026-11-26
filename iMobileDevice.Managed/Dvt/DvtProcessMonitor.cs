@@ -4,7 +4,11 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 
 /// <summary>A process reported by Instruments deviceinfo.</summary>
-public sealed record DeviceProcess(int ProcessId, string Name);
+public sealed record DeviceProcess(int ProcessId, string Name)
+{
+    /// <summary>Application bundle identifier when supplied by Instruments.</summary>
+    public string? BundleIdentifier { get; init; }
+}
 
 /// <summary>CPU usage in percent of one core and physical footprint in bytes. Missing measurements are null.</summary>
 public sealed record ProcessMeasurement(int ProcessId, string? Name, double? CpuPercent, long? PhysicalFootprintBytes);
@@ -31,7 +35,10 @@ public sealed partial class DvtClient
                 {
                     throw new InvalidDataException("Instruments returned an invalid process entry.");
                 }
-                processes.Add(new DeviceProcess(checked((int)pid), name));
+                processes.Add(new DeviceProcess(checked((int)pid), name)
+                {
+                    BundleIdentifier = fields.GetValueOrDefault("bundleIdentifier") as string,
+                });
             }
             return processes;
         }

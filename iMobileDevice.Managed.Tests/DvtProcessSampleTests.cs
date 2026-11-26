@@ -7,6 +7,22 @@ using Xunit;
 public class DvtProcessSampleTests
 {
     [Fact]
+    public void ApplicationObservationsFollowThePidAcrossExitAndRelaunch()
+    {
+        var first = new ProcessMeasurement(11, "Example", 12, 300);
+        var next = new ProcessMeasurement(22, "Example", 0, 500);
+        var other = new ProcessMeasurement(33, "Example", 99, 100);
+        var overlapping = new[] { other, first, next };
+
+        Assert.Equal(new ApplicationProcessObservation(11, first), ApplicationProcessObservation.FromBatch(11, 11, overlapping));
+        Assert.Equal(new ApplicationProcessObservation(null, null), ApplicationProcessObservation.FromBatch(11, null, overlapping));
+        Assert.Equal(new ApplicationProcessObservation(22, null), ApplicationProcessObservation.FromBatch(null, 22, overlapping));
+        Assert.Equal(new ApplicationProcessObservation(22, null), ApplicationProcessObservation.FromBatch(11, 22, overlapping));
+        Assert.Equal(new ApplicationProcessObservation(22, null), ApplicationProcessObservation.FromBatch(22, 22, new[] { other, first }));
+        Assert.Equal(new ApplicationProcessObservation(22, next), ApplicationProcessObservation.FromBatch(22, 22, overlapping));
+    }
+
+    [Fact]
     public void DecodesOnlyProcessRowsAndPreservesMissingMeasurements()
     {
         var rows = new object[]
