@@ -520,5 +520,52 @@ namespace iMobileDevice.iDevice
         {
             return iDeviceNativeMethods.idevice_get_tcp_endpoint(out host, ref port);
         }
+        
+        /// <summary>
+        /// Subscribe a callback function that will be called when device add/remove events occur.
+        /// </summary>
+        public virtual iDeviceError idevice_events_subscribe(out iDeviceSubscriptionContextHandle context, iDeviceEventCallBack callback, System.IntPtr userData)
+        {
+            iDeviceError returnValue;
+            returnValue = iDeviceNativeMethods.idevice_events_subscribe(out context, callback, userData);
+            if (context != null)
+            {
+                context.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        /// <summary>
+        /// Unsubscribe the event callback function that has been registered with idevice_events_subscribe().
+        /// </summary>
+        public virtual iDeviceError idevice_events_unsubscribe(System.IntPtr context)
+        {
+            return iDeviceNativeMethods.idevice_events_unsubscribe(context);
+        }
+        
+        /// <summary>
+        /// Returns the device ProductVersion in numerical form, where "X.Y.Z"
+        /// will be returned as (X &lt;&lt; 16) | (Y &lt;&lt; 8) | Z.
+        /// </summary>
+        public virtual uint idevice_get_device_version(iDeviceHandle device)
+        {
+            return iDeviceNativeMethods.idevice_get_device_version(device);
+        }
+        
+        /// <summary>
+        /// Gets a readable error string for a given idevice error code.
+        /// </summary>
+        public virtual System.IntPtr idevice_strerror(iDeviceError err)
+        {
+            return iDeviceNativeMethods.idevice_strerror(err);
+        }
+        
+        /// <summary>
+        /// Returns a static string of the libimobiledevice version.
+        /// </summary>
+        public virtual System.IntPtr libimobiledevice_version()
+        {
+            return iDeviceNativeMethods.libimobiledevice_version();
+        }
     }
 }

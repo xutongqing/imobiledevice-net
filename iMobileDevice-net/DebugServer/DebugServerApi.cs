@@ -388,5 +388,13 @@ namespace iMobileDevice.DebugServer
         {
             DebugServerNativeMethods.debugserver_decode_string(encodedBuffer, encodedLength, out buffer);
         }
+        
+        /// <summary>
+        /// Sets behavior when awaiting a response from the server.
+        /// </summary>
+        public virtual DebugServerError debugserver_client_set_receive_params(DebugServerClientHandle client, DebugServerCancelReceiveCallBack cancelReceive, int receiveLoopTimeout)
+        {
+            return DebugServerNativeMethods.debugserver_client_set_receive_params(client, cancelReceive, receiveLoopTimeout);
+        }
     }
 }

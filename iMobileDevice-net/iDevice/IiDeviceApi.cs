@@ -416,5 +416,31 @@ namespace iMobileDevice.iDevice
         /// 0 on success or negative on error
         /// </returns>
         iDeviceError idevice_get_tcp_endpoint(out string host, ref ushort port);
+        
+        /// <summary>
+        /// Subscribe a callback function that will be called when device add/remove events occur.
+        /// </summary>
+        iDeviceError idevice_events_subscribe(out iDeviceSubscriptionContextHandle context, iDeviceEventCallBack callback, System.IntPtr userData);
+        
+        /// <summary>
+        /// Unsubscribe the event callback function that has been registered with idevice_events_subscribe().
+        /// </summary>
+        iDeviceError idevice_events_unsubscribe(System.IntPtr context);
+        
+        /// <summary>
+        /// Returns the device ProductVersion in numerical form, where "X.Y.Z"
+        /// will be returned as (X &lt;&lt; 16) | (Y &lt;&lt; 8) | Z.
+        /// </summary>
+        uint idevice_get_device_version(iDeviceHandle device);
+        
+        /// <summary>
+        /// Gets a readable error string for a given idevice error code.
+        /// </summary>
+        System.IntPtr idevice_strerror(iDeviceError err);
+        
+        /// <summary>
+        /// Returns a static string of the libimobiledevice version.
+        /// </summary>
+        System.IntPtr libimobiledevice_version();
     }
 }

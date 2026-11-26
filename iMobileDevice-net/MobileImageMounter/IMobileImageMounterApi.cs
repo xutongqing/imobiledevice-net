@@ -195,5 +195,45 @@ namespace iMobileDevice.MobileImageMounter
         /// or another error code otherwise.
         /// </returns>
         MobileImageMounterError mobile_image_mounter_hangup(MobileImageMounterClientHandle client);
+        
+        /// <summary>
+        /// Mounts an image on the device with additional options.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_mount_image_with_options(MobileImageMounterClientHandle client, string imagePath, byte[] signature, uint signatureSize, string imageType, PlistHandle options, out PlistHandle result);
+        
+        /// <summary>
+        /// Unmount a mounted image at given path on the device.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_unmount_image(MobileImageMounterClientHandle client, string mountPath);
+        
+        /// <summary>
+        /// Query the developer mode status of the given device.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_query_developer_mode_status(MobileImageMounterClientHandle client, out PlistHandle result);
+        
+        /// <summary>
+        /// Query a personalization nonce for the given image type, used for personalized disk images (iOS 17+).
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_query_nonce(MobileImageMounterClientHandle client, string imageType, out System.IntPtr nonce, ref uint nonceSize);
+        
+        /// <summary>
+        /// Query personalization identifiers for the given image_type.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_query_personalization_identifiers(MobileImageMounterClientHandle client, string imageType, out PlistHandle result);
+        
+        /// <summary>
+        /// Query personalization manifest for the given image_type and signature.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_query_personalization_manifest(MobileImageMounterClientHandle client, string imageType, byte[] signature, uint signatureSize, out System.IntPtr manifest, ref uint manifestSize);
+        
+        /// <summary>
+        /// Roll the personalization nonce.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_roll_personalization_nonce(MobileImageMounterClientHandle client);
+        
+        /// <summary>
+        /// Roll the Cryptex nonce.
+        /// </summary>
+        MobileImageMounterError mobile_image_mounter_roll_cryptex_nonce(MobileImageMounterClientHandle client);
     }
 }

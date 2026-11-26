@@ -441,5 +441,69 @@ namespace iMobileDevice.iDevice
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(iDeviceNativeMethods.LibraryName, EntryPoint="idevice_get_tcp_endpoint", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern iDeviceError idevice_get_tcp_endpoint(out System.IntPtr host, ref ushort port);
+        
+        /// <summary>
+        /// Subscribe a callback function that will be called when device add/remove events occur.
+        /// </summary>
+        /// <param name="context">
+        /// A pointer to a idevice_subscription_context_t that will be set upon creation of the subscription.
+        /// </param>
+        /// <param name="callback">
+        /// Callback function to call.
+        /// </param>
+        /// <param name="userData">
+        /// Application-specific data passed as parameter to the registered callback function.
+        /// </param>
+        /// <returns>
+        /// IDEVICE_E_SUCCESS on success or an error value when an error occurred.
+        /// </returns>
+        [System.Runtime.InteropServices.DllImportAttribute(iDeviceNativeMethods.LibraryName, EntryPoint="idevice_events_subscribe", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern iDeviceError idevice_events_subscribe(out iDeviceSubscriptionContextHandle context, iDeviceEventCallBack callback, System.IntPtr userData);
+        
+        /// <summary>
+        /// Unsubscribe the event callback function that has been registered with idevice_events_subscribe().
+        /// </summary>
+        /// <param name="context">
+        /// A valid context as returned from idevice_events_subscribe().
+        /// </param>
+        /// <returns>
+        /// IDEVICE_E_SUCCESS on success or an error value when an error occurred.
+        /// </returns>
+        [System.Runtime.InteropServices.DllImportAttribute(iDeviceNativeMethods.LibraryName, EntryPoint="idevice_events_unsubscribe", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern iDeviceError idevice_events_unsubscribe(System.IntPtr context);
+        
+        /// <summary>
+        /// Returns the device ProductVersion in numerical form, where "X.Y.Z"
+        /// will be returned as (X &lt;&lt; 16) | (Y &lt;&lt; 8) | Z.
+        /// </summary>
+        /// <param name="device">
+        /// Initialized device client.
+        /// </param>
+        /// <returns>
+        /// A numerical representation of the X.Y.Z ProductVersion string or 0 if the version cannot be retrieved.
+        /// </returns>
+        [System.Runtime.InteropServices.DllImportAttribute(iDeviceNativeMethods.LibraryName, EntryPoint="idevice_get_device_version", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern uint idevice_get_device_version(iDeviceHandle device);
+        
+        /// <summary>
+        /// Gets a readable error string for a given idevice error code.
+        /// </summary>
+        /// <param name="err">
+        /// An idevice error code.
+        /// </param>
+        /// <returns>
+        /// A pointer to a static readable error string.
+        /// </returns>
+        [System.Runtime.InteropServices.DllImportAttribute(iDeviceNativeMethods.LibraryName, EntryPoint="idevice_strerror", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern System.IntPtr idevice_strerror(iDeviceError err);
+        
+        /// <summary>
+        /// Returns a static string of the libimobiledevice version.
+        /// </summary>
+        /// <returns>
+        /// A pointer to the libimobiledevice version as a static ASCII string.
+        /// </returns>
+        [System.Runtime.InteropServices.DllImportAttribute(iDeviceNativeMethods.LibraryName, EntryPoint="libimobiledevice_version", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern System.IntPtr libimobiledevice_version();
     }
 }

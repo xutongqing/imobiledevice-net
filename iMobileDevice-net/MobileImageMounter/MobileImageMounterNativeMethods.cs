@@ -201,5 +201,53 @@ namespace iMobileDevice.MobileImageMounter
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_hangup", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern MobileImageMounterError mobile_image_mounter_hangup(MobileImageMounterClientHandle client);
+        
+        /// <summary>
+        /// Mounts an image on the device with additional options.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_mount_image_with_options", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_mount_image_with_options(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imagePath, byte[] signature, uint signatureSize, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, PlistHandle options, out PlistHandle result);
+        
+        /// <summary>
+        /// Unmount a mounted image at given path on the device.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_unmount_image", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_unmount_image(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string mountPath);
+        
+        /// <summary>
+        /// Query the developer mode status of the given device.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_query_developer_mode_status", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_query_developer_mode_status(MobileImageMounterClientHandle client, out PlistHandle result);
+        
+        /// <summary>
+        /// Query a personalization nonce for the given image type, used for personalized disk images (iOS 17+).
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_query_nonce", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_query_nonce(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, out System.IntPtr nonce, ref uint nonceSize);
+        
+        /// <summary>
+        /// Query personalization identifiers for the given image_type.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_query_personalization_identifiers", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_query_personalization_identifiers(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, out PlistHandle result);
+        
+        /// <summary>
+        /// Query personalization manifest for the given image_type and signature.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_query_personalization_manifest", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_query_personalization_manifest(MobileImageMounterClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string imageType, byte[] signature, uint signatureSize, out System.IntPtr manifest, ref uint manifestSize);
+        
+        /// <summary>
+        /// Roll the personalization nonce.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_roll_personalization_nonce", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_roll_personalization_nonce(MobileImageMounterClientHandle client);
+        
+        /// <summary>
+        /// Roll the Cryptex nonce.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(MobileImageMounterNativeMethods.LibraryName, EntryPoint="mobile_image_mounter_roll_cryptex_nonce", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern MobileImageMounterError mobile_image_mounter_roll_cryptex_nonce(MobileImageMounterClientHandle client);
     }
 }

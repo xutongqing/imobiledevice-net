@@ -50,7 +50,11 @@ namespace iMobileDevice
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                if (NativeLibrary.TryLoad("libplist-2.0.so.3", Assembly.GetExecutingAssembly(), null, out lib))
+                if (NativeLibrary.TryLoad("libplist-2.0.so.4", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libplist-2.0.so.3", Assembly.GetExecutingAssembly(), null, out lib))
                 {
                     return lib;
                 }
@@ -70,7 +74,11 @@ namespace iMobileDevice
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                if (NativeLibrary.TryLoad("libplist-2.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                if (NativeLibrary.TryLoad("libplist-2.0.4.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libplist-2.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
                 {
                     return lib;
                 }
@@ -89,7 +97,19 @@ namespace iMobileDevice
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                if (NativeLibrary.TryLoad("libusbmuxd.so.6", Assembly.GetExecutingAssembly(), null, out lib))
+                if (NativeLibrary.TryLoad("libusbmuxd-2.0.so.7", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libusbmuxd-2.0.so.6", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libusbmuxd-2.0.so", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libusbmuxd.so.6", Assembly.GetExecutingAssembly(), null, out lib))
                 {
                     return lib;
                 }
@@ -106,7 +126,15 @@ namespace iMobileDevice
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                if (NativeLibrary.TryLoad("libusbmuxd.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                if (NativeLibrary.TryLoad("libusbmuxd-2.0.7.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libusbmuxd-2.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libusbmuxd.dylib", Assembly.GetExecutingAssembly(), null, out lib))
                 {
                     return lib;
                 }
@@ -141,7 +169,11 @@ namespace iMobileDevice
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                if (NativeLibrary.TryLoad("libimobiledevice-1.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                if (NativeLibrary.TryLoad("libimobiledevice-1.0.6.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                {
+                    return lib;
+                }
+                else if (NativeLibrary.TryLoad("libimobiledevice-1.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
                 {
                     return lib;
                 }

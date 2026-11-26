@@ -180,5 +180,10 @@ namespace iMobileDevice.PropertyListService
         /// NULL, or PROPERTY_LIST_SERVICE_E_UNKNOWN_ERROR otherwise.
         /// </returns>
         PropertyListServiceError property_list_service_disable_ssl(PropertyListServiceClientHandle client);
+        
+        /// <summary>
+        /// Return a non-owning handle to the parent <see cref="iMobileDevice.Service.ServiceClientHandle"/> of the given property list service client.
+        /// </summary>
+        PropertyListServiceError property_list_service_get_service_client(PropertyListServiceClientHandle client, out iMobileDevice.Service.ServiceClientHandle serviceClient);
     }
 }

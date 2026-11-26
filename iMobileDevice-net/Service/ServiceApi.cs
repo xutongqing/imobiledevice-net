@@ -257,5 +257,17 @@ namespace iMobileDevice.Service
         {
             return ServiceNativeMethods.service_disable_bypass_ssl(client, sslbypass);
         }
+        
+        /// <summary>
+        /// Return a non-owning handle to the parent <see cref="iDeviceConnectionHandle"/> of the given service client.
+        /// </summary>
+        public virtual ServiceError service_get_connection(ServiceClientHandle client, out iDeviceConnectionHandle connection)
+        {
+            System.IntPtr connectionPtr;
+            ServiceError returnValue = ServiceNativeMethods.service_get_connection(client, out connectionPtr);
+            connection = iDeviceConnectionHandle.DangerousCreate(connectionPtr, ownsHandle: false);
+            connection.Api = this.Parent;
+            return returnValue;
+        }
     }
 }

@@ -42,6 +42,8 @@ namespace iMobileDevice.MobileImageMounter
         
         DeviceLocked = -5,
         
+        NotSupported = -6,
+        
         UnknownError = -256,
     }
 }

@@ -529,5 +529,41 @@ namespace iMobileDevice.Afc
         {
             return AfcNativeMethods.afc_dictionary_free(dictionary);
         }
+        
+        /// <summary>
+        /// Get device information for a connected client as a plist dictionary.
+        /// </summary>
+        public virtual AfcError afc_get_device_info_plist(AfcClientHandle client, out PlistHandle deviceInformation)
+        {
+            AfcError returnValue;
+            returnValue = AfcNativeMethods.afc_get_device_info_plist(client, out deviceInformation);
+            if (deviceInformation != null)
+            {
+                deviceInformation.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        /// <summary>
+        /// Gets information about a specific file as a plist dictionary.
+        /// </summary>
+        public virtual AfcError afc_get_file_info_plist(AfcClientHandle client, string path, out PlistHandle fileInformation)
+        {
+            AfcError returnValue;
+            returnValue = AfcNativeMethods.afc_get_file_info_plist(client, path, out fileInformation);
+            if (fileInformation != null)
+            {
+                fileInformation.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        /// <summary>
+        /// Gets a readable error string for a given AFC error code.
+        /// </summary>
+        public virtual System.IntPtr afc_strerror(AfcError err)
+        {
+            return AfcNativeMethods.afc_strerror(err);
+        }
     }
 }

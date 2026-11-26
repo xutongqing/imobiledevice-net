@@ -331,5 +331,11 @@ namespace iMobileDevice.DebugServer
         /// </param>
         [System.Runtime.InteropServices.DllImportAttribute(DebugServerNativeMethods.LibraryName, EntryPoint="debugserver_decode_string", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern void debugserver_decode_string([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string encodedBuffer, uint encodedLength, out System.IntPtr buffer);
+        
+        /// <summary>
+        /// Sets behavior when awaiting a response from the server.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(DebugServerNativeMethods.LibraryName, EntryPoint="debugserver_client_set_receive_params", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern DebugServerError debugserver_client_set_receive_params(DebugServerClientHandle client, DebugServerCancelReceiveCallBack cancelReceive, int receiveLoopTimeout);
     }
 }

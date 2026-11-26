@@ -40,6 +40,8 @@ namespace iMobileDevice.iDevice
         
         NotEnoughData = -4,
         
+        ConnRefused = -5,
+        
         SslError = -6,
         
         Timeout = -7,

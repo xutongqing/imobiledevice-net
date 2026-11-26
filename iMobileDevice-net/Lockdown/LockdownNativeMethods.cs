@@ -553,5 +553,29 @@ namespace iMobileDevice.Lockdown
         /// </param>
         [System.Runtime.InteropServices.DllImportAttribute(LockdownNativeMethods.LibraryName, EntryPoint="lockdownd_strerror", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern System.IntPtr lockdownd_strerror(LockdownError err);
+        
+        /// <summary>
+        /// Creates a CU pairing session for the current lockdown client.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(LockdownNativeMethods.LibraryName, EntryPoint="lockdownd_cu_pairing_create", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern LockdownError lockdownd_cu_pairing_create(LockdownClientHandle client, LockdownCuPairingCallBack pairingCallback, System.IntPtr cbUserData, PlistHandle hostInfo, PlistHandle acl);
+        
+        /// <summary>
+        /// Sends a request via lockdown client with established CU pairing session and attempts to retrieve a reply.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(LockdownNativeMethods.LibraryName, EntryPoint="lockdownd_cu_send_request_and_get_reply", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern LockdownError lockdownd_cu_send_request_and_get_reply(LockdownClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string request, PlistHandle requestPayload, out PlistHandle reply);
+        
+        /// <summary>
+        /// Retrieves a value using an optional domain and/or key name from a lockdown client with established CU pairing session.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(LockdownNativeMethods.LibraryName, EntryPoint="lockdownd_get_value_cu", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern LockdownError lockdownd_get_value_cu(LockdownClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string domain, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, out PlistHandle value);
+        
+        /// <summary>
+        /// Perform a device pairing with a lockdown client that has an established CU pairing session.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(LockdownNativeMethods.LibraryName, EntryPoint="lockdownd_pair_cu", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern LockdownError lockdownd_pair_cu(LockdownClientHandle client);
     }
 }

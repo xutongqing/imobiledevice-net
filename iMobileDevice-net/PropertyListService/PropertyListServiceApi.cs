@@ -230,5 +230,17 @@ namespace iMobileDevice.PropertyListService
         {
             return PropertyListServiceNativeMethods.property_list_service_disable_ssl(client);
         }
+        
+        /// <summary>
+        /// Return a non-owning handle to the parent <see cref="iMobileDevice.Service.ServiceClientHandle"/> of the given property list service client.
+        /// </summary>
+        public virtual PropertyListServiceError property_list_service_get_service_client(PropertyListServiceClientHandle client, out iMobileDevice.Service.ServiceClientHandle serviceClient)
+        {
+            System.IntPtr serviceClientPtr;
+            PropertyListServiceError returnValue = PropertyListServiceNativeMethods.property_list_service_get_service_client(client, out serviceClientPtr);
+            serviceClient = iMobileDevice.Service.ServiceClientHandle.DangerousCreate(serviceClientPtr, ownsHandle: false);
+            serviceClient.Api = this.Parent;
+            return returnValue;
+        }
     }
 }

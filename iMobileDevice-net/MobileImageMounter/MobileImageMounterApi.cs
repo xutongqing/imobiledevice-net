@@ -245,5 +245,87 @@ namespace iMobileDevice.MobileImageMounter
         {
             return MobileImageMounterNativeMethods.mobile_image_mounter_hangup(client);
         }
+        
+        /// <summary>
+        /// Mounts an image on the device with additional options.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_mount_image_with_options(MobileImageMounterClientHandle client, string imagePath, byte[] signature, uint signatureSize, string imageType, PlistHandle options, out PlistHandle result)
+        {
+            MobileImageMounterError returnValue;
+            returnValue = MobileImageMounterNativeMethods.mobile_image_mounter_mount_image_with_options(client, imagePath, signature, signatureSize, imageType, options, out result);
+            if (result != null)
+            {
+                result.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        /// <summary>
+        /// Unmount a mounted image at given path on the device.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_unmount_image(MobileImageMounterClientHandle client, string mountPath)
+        {
+            return MobileImageMounterNativeMethods.mobile_image_mounter_unmount_image(client, mountPath);
+        }
+        
+        /// <summary>
+        /// Query the developer mode status of the given device.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_query_developer_mode_status(MobileImageMounterClientHandle client, out PlistHandle result)
+        {
+            MobileImageMounterError returnValue;
+            returnValue = MobileImageMounterNativeMethods.mobile_image_mounter_query_developer_mode_status(client, out result);
+            if (result != null)
+            {
+                result.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        /// <summary>
+        /// Query a personalization nonce for the given image type, used for personalized disk images (iOS 17+).
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_query_nonce(MobileImageMounterClientHandle client, string imageType, out System.IntPtr nonce, ref uint nonceSize)
+        {
+            return MobileImageMounterNativeMethods.mobile_image_mounter_query_nonce(client, imageType, out nonce, ref nonceSize);
+        }
+        
+        /// <summary>
+        /// Query personalization identifiers for the given image_type.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_query_personalization_identifiers(MobileImageMounterClientHandle client, string imageType, out PlistHandle result)
+        {
+            MobileImageMounterError returnValue;
+            returnValue = MobileImageMounterNativeMethods.mobile_image_mounter_query_personalization_identifiers(client, imageType, out result);
+            if (result != null)
+            {
+                result.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        /// <summary>
+        /// Query personalization manifest for the given image_type and signature.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_query_personalization_manifest(MobileImageMounterClientHandle client, string imageType, byte[] signature, uint signatureSize, out System.IntPtr manifest, ref uint manifestSize)
+        {
+            return MobileImageMounterNativeMethods.mobile_image_mounter_query_personalization_manifest(client, imageType, signature, signatureSize, out manifest, ref manifestSize);
+        }
+        
+        /// <summary>
+        /// Roll the personalization nonce.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_roll_personalization_nonce(MobileImageMounterClientHandle client)
+        {
+            return MobileImageMounterNativeMethods.mobile_image_mounter_roll_personalization_nonce(client);
+        }
+        
+        /// <summary>
+        /// Roll the Cryptex nonce.
+        /// </summary>
+        public virtual MobileImageMounterError mobile_image_mounter_roll_cryptex_nonce(MobileImageMounterClientHandle client)
+        {
+            return MobileImageMounterNativeMethods.mobile_image_mounter_roll_cryptex_nonce(client);
+        }
     }
 }

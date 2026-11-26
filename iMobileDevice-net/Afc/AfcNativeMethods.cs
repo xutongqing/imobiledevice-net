@@ -459,5 +459,23 @@ namespace iMobileDevice.Afc
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(AfcNativeMethods.LibraryName, EntryPoint="afc_dictionary_free", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern AfcError afc_dictionary_free(System.IntPtr dictionary);
+        
+        /// <summary>
+        /// Get device information for a connected client as a plist dictionary.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(AfcNativeMethods.LibraryName, EntryPoint="afc_get_device_info_plist", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern AfcError afc_get_device_info_plist(AfcClientHandle client, out PlistHandle deviceInformation);
+        
+        /// <summary>
+        /// Gets information about a specific file as a plist dictionary.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(AfcNativeMethods.LibraryName, EntryPoint="afc_get_file_info_plist", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern AfcError afc_get_file_info_plist(AfcClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string path, out PlistHandle fileInformation);
+        
+        /// <summary>
+        /// Gets a readable error string for a given AFC error code.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(AfcNativeMethods.LibraryName, EntryPoint="afc_strerror", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern System.IntPtr afc_strerror(AfcError err);
     }
 }

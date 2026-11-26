@@ -317,5 +317,10 @@ namespace iMobileDevice.DebugServer
         /// Decoded string to be freed by the caller
         /// </param>
         void debugserver_decode_string(string encodedBuffer, uint encodedLength, out string buffer);
+        
+        /// <summary>
+        /// Sets behavior when awaiting a response from the server.
+        /// </summary>
+        DebugServerError debugserver_client_set_receive_params(DebugServerClientHandle client, DebugServerCancelReceiveCallBack cancelReceive, int receiveLoopTimeout);
     }
 }

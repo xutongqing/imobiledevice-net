@@ -218,5 +218,11 @@ namespace iMobileDevice.Service
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(ServiceNativeMethods.LibraryName, EntryPoint="service_disable_bypass_ssl", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern ServiceError service_disable_bypass_ssl(ServiceClientHandle client, char sslbypass);
+        
+        /// <summary>
+        /// Return a handle to the parent idevice_connection_t of the given service client.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(ServiceNativeMethods.LibraryName, EntryPoint="service_get_connection", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern ServiceError service_get_connection(ServiceClientHandle client, out System.IntPtr connection);
     }
 }

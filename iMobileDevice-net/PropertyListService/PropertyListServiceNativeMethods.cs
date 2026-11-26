@@ -187,5 +187,11 @@ namespace iMobileDevice.PropertyListService
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(PropertyListServiceNativeMethods.LibraryName, EntryPoint="property_list_service_disable_ssl", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern PropertyListServiceError property_list_service_disable_ssl(PropertyListServiceClientHandle client);
+        
+        /// <summary>
+        /// Return a handle to the parent service_client_t of the given property list service client.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(PropertyListServiceNativeMethods.LibraryName, EntryPoint="property_list_service_get_service_client", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PropertyListServiceError property_list_service_get_service_client(PropertyListServiceClientHandle client, out System.IntPtr serviceClient);
     }
 }

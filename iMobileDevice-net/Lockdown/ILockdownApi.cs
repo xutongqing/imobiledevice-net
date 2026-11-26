@@ -526,5 +526,25 @@ namespace iMobileDevice.Lockdown
         /// A lockdownd error code
         /// </param>
         System.IntPtr lockdownd_strerror(LockdownError err);
+        
+        /// <summary>
+        /// Creates a CU pairing session for the current lockdown client.
+        /// </summary>
+        LockdownError lockdownd_cu_pairing_create(LockdownClientHandle client, LockdownCuPairingCallBack pairingCallback, System.IntPtr cbUserData, PlistHandle hostInfo, PlistHandle acl);
+        
+        /// <summary>
+        /// Sends a request via lockdown client with established CU pairing session and attempts to retrieve a reply.
+        /// </summary>
+        LockdownError lockdownd_cu_send_request_and_get_reply(LockdownClientHandle client, string request, PlistHandle requestPayload, out PlistHandle reply);
+        
+        /// <summary>
+        /// Retrieves a value using an optional domain and/or key name from a lockdown client with established CU pairing session.
+        /// </summary>
+        LockdownError lockdownd_get_value_cu(LockdownClientHandle client, string domain, string key, out PlistHandle value);
+        
+        /// <summary>
+        /// Perform a device pairing with a lockdown client that has an established CU pairing session.
+        /// </summary>
+        LockdownError lockdownd_pair_cu(LockdownClientHandle client);
     }
 }

@@ -40,6 +40,9 @@ namespace iMobileDevice
     using iMobileDevice.Service;
     using iMobileDevice.SyslogRelay;
     using iMobileDevice.WebInspector;
+    using iMobileDevice.BtPacketLogger;
+    using iMobileDevice.OsTrace;
+    using iMobileDevice.ReverseProxy;
     
     
     public interface ILibiMobileDevice
@@ -191,6 +194,21 @@ namespace iMobileDevice
         }
         
         IWebInspectorApi WebInspector
+        {
+            get;
+        }
+        
+        IBtPacketLoggerApi BtPacketLogger
+        {
+            get;
+        }
+        
+        IOsTraceApi OsTrace
+        {
+            get;
+        }
+        
+        IReverseProxyApi ReverseProxy
         {
             get;
         }

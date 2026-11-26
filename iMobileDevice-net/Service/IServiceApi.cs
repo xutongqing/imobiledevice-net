@@ -210,5 +210,10 @@ namespace iMobileDevice.Service
         /// NULL, or SERVICE_E_UNKNOWN_ERROR otherwise.
         /// </returns>
         ServiceError service_disable_bypass_ssl(ServiceClientHandle client, char sslbypass);
+        
+        /// <summary>
+        /// Return a non-owning handle to the parent <see cref="iDeviceConnectionHandle"/> of the given service client.
+        /// </summary>
+        ServiceError service_get_connection(ServiceClientHandle client, out iDeviceConnectionHandle connection);
     }
 }

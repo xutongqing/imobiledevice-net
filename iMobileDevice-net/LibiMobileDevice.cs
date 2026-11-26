@@ -40,6 +40,9 @@ namespace iMobileDevice
     using iMobileDevice.Service;
     using iMobileDevice.SyslogRelay;
     using iMobileDevice.WebInspector;
+    using iMobileDevice.BtPacketLogger;
+    using iMobileDevice.OsTrace;
+    using iMobileDevice.ReverseProxy;
     
     
     public class LibiMobileDevice : ILibiMobileDevice
@@ -107,6 +110,12 @@ namespace iMobileDevice
         
         private IWebInspectorApi webInspector;
         
+        private IBtPacketLoggerApi btPacketLogger;
+        
+        private IOsTraceApi osTrace;
+        
+        private IReverseProxyApi reverseProxy;
+        
         public LibiMobileDevice()
         {
             this.usbmuxd = new UsbmuxdApi(this);
@@ -139,6 +148,9 @@ namespace iMobileDevice
             this.service = new ServiceApi(this);
             this.syslogRelay = new SyslogRelayApi(this);
             this.webInspector = new WebInspectorApi(this);
+            this.btPacketLogger = new BtPacketLoggerApi(this);
+            this.osTrace = new OsTraceApi(this);
+            this.reverseProxy = new ReverseProxyApi(this);
         }
         
         public static ILibiMobileDevice Instance
@@ -510,6 +522,42 @@ namespace iMobileDevice
             set
             {
                 this.webInspector = value;
+            }
+        }
+        
+        public virtual IBtPacketLoggerApi BtPacketLogger
+        {
+            get
+            {
+                return this.btPacketLogger;
+            }
+            set
+            {
+                this.btPacketLogger = value;
+            }
+        }
+        
+        public virtual IOsTraceApi OsTrace
+        {
+            get
+            {
+                return this.osTrace;
+            }
+            set
+            {
+                this.osTrace = value;
+            }
+        }
+        
+        public virtual IReverseProxyApi ReverseProxy
+        {
+            get
+            {
+                return this.reverseProxy;
+            }
+            set
+            {
+                this.reverseProxy = value;
             }
         }
         
