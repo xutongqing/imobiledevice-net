@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>iMobileDevice.Managed</RootNamespace>
+    <AssemblyName>iMobileDevice.Managed</AssemblyName>
+    <PackageId>iMobileDevice.Managed</PackageId>
+    <Description>Pure managed C# implementation of Apple iOS device protocols (Plist, usbmuxd, Lockdown, AFC) with zero native library dependencies.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+</Project>

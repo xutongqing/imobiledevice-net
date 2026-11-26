@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iMobileDevice-net.Demo", "i
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iMobileDevice.Generator.Tests", "iMobileDevice.Generator.Tests\iMobileDevice.Generator.Tests.csproj", "{8F0FD31E-6BDC-4DB6-A94F-2B08E40BACDD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iMobileDevice.Managed", "iMobileDevice.Managed\iMobileDevice.Managed.csproj", "{FBD48407-71C1-475C-804D-E0919A3E6813}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iMobileDevice.Managed.Tests", "iMobileDevice.Managed.Tests\iMobileDevice.Managed.Tests.csproj", "{FE3B351F-65AF-4CCB-A791-36E29A208FB7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +83,30 @@ Global
 		{8F0FD31E-6BDC-4DB6-A94F-2B08E40BACDD}.Release|x64.Build.0 = Release|Any CPU
 		{8F0FD31E-6BDC-4DB6-A94F-2B08E40BACDD}.Release|x86.ActiveCfg = Release|Any CPU
 		{8F0FD31E-6BDC-4DB6-A94F-2B08E40BACDD}.Release|x86.Build.0 = Release|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Debug|x64.Build.0 = Debug|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Debug|x86.Build.0 = Debug|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Release|x64.ActiveCfg = Release|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Release|x64.Build.0 = Release|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Release|x86.ActiveCfg = Release|Any CPU
+		{FBD48407-71C1-475C-804D-E0919A3E6813}.Release|x86.Build.0 = Release|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Debug|x64.Build.0 = Debug|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Debug|x86.Build.0 = Debug|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Release|x64.ActiveCfg = Release|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Release|x64.Build.0 = Release|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Release|x86.ActiveCfg = Release|Any CPU
+		{FE3B351F-65AF-4CCB-A791-36E29A208FB7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

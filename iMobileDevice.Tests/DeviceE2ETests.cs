@@ -388,23 +388,58 @@ namespace iMobileDevice.Tests
                     }
                 }
 
-                // 2. MobileImageMounter (read-only lookup)
+                // 2. MobileImageMounter (read-only lookup + iOS 17+ personalized query APIs)
                 MobileImageMounterError mimStart = api.MobileImageMounter.mobile_image_mounter_start_service(device, out MobileImageMounterClientHandle mim, "imobiledevice-net-e2e");
                 this.output.WriteLine($"mobile_image_mounter_start_service: {mimStart}");
                 if (mimStart == MobileImageMounterError.Success)
                 {
                     using (mim)
                     {
-                        MobileImageMounterError lookupErr = api.MobileImageMounter.mobile_image_mounter_lookup_image(mim, "Developer", out PlistHandle lookupResult);
-                        this.output.WriteLine($"mobile_image_mounter_lookup_image('Developer'): {lookupErr}");
-                        if (lookupResult != null && !lookupResult.IsInvalid)
+                        foreach (string imgType in new[] { "Developer", "Personalized" })
                         {
-                            using (lookupResult)
+                            MobileImageMounterError lookupErr = api.MobileImageMounter.mobile_image_mounter_lookup_image(mim, imgType, out PlistHandle lookupResult);
+                            this.output.WriteLine($"mobile_image_mounter_lookup_image('{imgType}'): {lookupErr}");
+                            if (lookupResult != null && !lookupResult.IsInvalid)
+                            {
+                                using (lookupResult)
+                                {
+                                    uint len = 0;
+                                    api.Plist.plist_to_json(lookupResult, out string json, ref len, 0);
+                                    this.output.WriteLine($"  lookup('{imgType}') result: {json}");
+                                }
+                            }
+                        }
+
+                        var devModeErr = api.MobileImageMounter.mobile_image_mounter_query_developer_mode_status(mim, out PlistHandle devModePlist);
+                        this.output.WriteLine($"mobile_image_mounter_query_developer_mode_status: {devModeErr}");
+                        if (devModeErr == MobileImageMounterError.Success && devModePlist != null && !devModePlist.IsInvalid)
+                        {
+                            using (devModePlist)
                             {
                                 uint len = 0;
-                                api.Plist.plist_to_json(lookupResult, out string json, ref len, 0);
-                                this.output.WriteLine($"mobile_image_mounter lookup result: {json}");
+                                api.Plist.plist_to_json(devModePlist, out string json, ref len, 0);
+                                this.output.WriteLine($"  devMode: {json}");
                             }
+                        }
+
+                        var idErr = api.MobileImageMounter.mobile_image_mounter_query_personalization_identifiers(mim, null, out PlistHandle idPlist);
+                        this.output.WriteLine($"mobile_image_mounter_query_personalization_identifiers: {idErr}");
+                        if (idErr == MobileImageMounterError.Success && idPlist != null && !idPlist.IsInvalid)
+                        {
+                            using (idPlist)
+                            {
+                                uint len = 0;
+                                api.Plist.plist_to_json(idPlist, out string json, ref len, 0);
+                                this.output.WriteLine($"  identifiers: {json}");
+                            }
+                        }
+
+                        uint nonceSize = 0;
+                        var nonceErr = api.MobileImageMounter.mobile_image_mounter_query_nonce(mim, "Personalized", out IntPtr noncePtr, ref nonceSize);
+                        this.output.WriteLine($"mobile_image_mounter_query_nonce('Personalized'): {nonceErr}, size={nonceSize}");
+                        if (noncePtr != IntPtr.Zero)
+                        {
+                            api.Plist.plist_mem_free(noncePtr);
                         }
                     }
                 }
