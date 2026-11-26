@@ -61,8 +61,11 @@ namespace iMobileDevice.Tests
 
             var api = new LibiMobileDevice();
 
-            using (var intNode = api.Plist.plist_new_int(-42))
+            using (var dict = api.Plist.plist_new_dict())
             {
+                Assert.False(dict.IsInvalid);
+
+                var intNode = api.Plist.plist_new_int(-42);
                 Assert.False(intNode.IsInvalid);
                 Assert.Equal(PlistType.Int, api.Plist.plist_get_node_type(intNode));
                 Assert.Equal(1, api.Plist.plist_int_val_is_negative(intNode));
@@ -71,16 +74,20 @@ namespace iMobileDevice.Tests
                 api.Plist.plist_get_int_val(intNode, ref val);
                 Assert.Equal(-42, val);
 
+                api.Plist.plist_dict_set_item(dict, "val", intNode);
+                // Ownership of intNode transfers to dict in libplist.
+                intNode.SetHandleAsInvalid();
+
+                Assert.Equal(-42, api.Plist.plist_dict_get_int(dict, "val"));
+
                 uint len = 0;
-                Assert.Equal(PlistError.Success, api.Plist.plist_to_json(intNode, out string json, ref len, 0));
-                Assert.Equal("-42", json.Trim());
+                Assert.Equal(PlistError.Success, api.Plist.plist_to_json(dict, out string json, ref len, 0));
+                Assert.Contains("-42", json);
 
                 Assert.Equal(PlistError.Success, api.Plist.plist_from_json(json, (uint)json.Length, out PlistHandle parsed));
                 using (parsed)
                 {
-                    long parsedVal = 0;
-                    api.Plist.plist_get_int_val(parsed, ref parsedVal);
-                    Assert.Equal(-42, parsedVal);
+                    Assert.Equal(-42, api.Plist.plist_dict_get_int(parsed, "val"));
                 }
             }
         }
