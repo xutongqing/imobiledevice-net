@@ -99,6 +99,37 @@ public class TunnelAndProtocolTests
     }
 
     [Fact]
+    public async Task SlowDtxSubscriberReceivesLatestEventsWithoutBlockingRepliesOrEof()
+    {
+        using var wire = new MemoryStream();
+        // The device uses a negative wire channel for its own messages. IDs can match a pending RPC.
+        for (uint id = 1; id <= 6; id++)
+        {
+            WriteDtxHeader(wire, fragId: 0, fragCount: 1, length: 16, id: id, convIdx: 0, chan: unchecked((uint)-2));
+            wire.Write(new byte[16]);
+        }
+        WriteDtxHeader(wire, fragId: 0, fragCount: 1, length: 16, id: 1, convIdx: 1, chan: 1);
+        wire.Write(new byte[16]);
+
+        using var duplex = new PairedMemoryStream(wire.ToArray());
+        await using var dtx = new DtxConnection(duplex);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var events = dtx.Subscribe(2);
+        var otherChannel = dtx.Subscribe(3);
+        var reply = await dtx.InvokeAsync(1, "runningProcesses", cancellationToken: timeout.Token);
+        Assert.Equal(1u, reply.ConversationIndex);
+        for (uint id = 3; id <= 6; id++)
+        {
+            var message = await events.ReadAsync(timeout.Token);
+            Assert.Equal(id, message.Identifier);
+            Assert.Equal(0u, message.ConversationIndex);
+        }
+        await Assert.ThrowsAsync<EndOfStreamException>(() => events.Completion.WaitAsync(timeout.Token));
+        await Assert.ThrowsAsync<EndOfStreamException>(() => otherChannel.Completion.WaitAsync(timeout.Token));
+        await Assert.ThrowsAsync<IOException>(() => dtx.InvokeAsync(1, "runningProcesses", cancellationToken: timeout.Token));
+    }
+
+    [Fact]
     public void Ipv6TcpChecksumValidatesZeroWhenIncluded()
     {
         byte[] src = IPAddress.Parse("fd48:4e1c:27ff::2").GetAddressBytes();

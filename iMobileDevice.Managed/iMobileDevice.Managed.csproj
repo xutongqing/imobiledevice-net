@@ -8,13 +8,17 @@
     <RootNamespace>iMobileDevice.Managed</RootNamespace>
     <AssemblyName>iMobileDevice.Managed</AssemblyName>
     <PackageId>iMobileDevice.Managed</PackageId>
-    <Description>Pure managed C# implementation of Apple iOS device protocols (Plist, usbmuxd, Lockdown, AFC) with zero native library dependencies.</Description>
+    <Description>Pure C# access to paired iOS devices over USB, including Lockdown, AFC, RemoteXPC and Instruments process monitoring.</Description>
+    <RepositoryUrl>https://github.com/xutongqing/imobiledevice-net</RepositoryUrl>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="iMobileDevice.Managed.Tests" />
+    <None Include="../LICENSE.txt;../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

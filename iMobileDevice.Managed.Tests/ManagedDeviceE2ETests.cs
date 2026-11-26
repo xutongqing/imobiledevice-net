@@ -13,6 +13,7 @@ using Xunit.Abstractions;
 /// Real-device end-to-end tests for pure managed C# protocols (zero native libimobiledevice/libusbmuxd/libplist usage).
 /// Enabled when IMOBILEDEVICE_RUN_DEVICE_E2E=1.
 /// </summary>
+[Collection("USB device")]
 public class ManagedDeviceE2ETests
 {
     private readonly ITestOutputHelper output;
@@ -22,17 +23,9 @@ public class ManagedDeviceE2ETests
         this.output = output;
     }
 
-    private static bool ShouldRun =>
-        string.Equals(Environment.GetEnvironmentVariable("IMOBILEDEVICE_RUN_DEVICE_E2E"), "1", StringComparison.Ordinal);
-
-    [Fact]
+    [UsbDeviceFact]
     public async Task PureManagedUsbDiscoveryLockdownTlsAndAfcRoundTripWorks()
     {
-        if (!ShouldRun)
-        {
-            return;
-        }
-
         var usbmuxd = new UsbmuxdClient();
 
         // 1. Discover USB devices via pure C# usbmuxd

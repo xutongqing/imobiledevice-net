@@ -348,21 +348,31 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Pack NuGet package
+      - name: Pack native and managed NuGet packages
         shell: pwsh
         run: |
           $env:SYSTEM_ARTIFACTSDIRECTORY = "$PWD/native-artifacts"
           dotnet pack iMobileDevice-net/iMobileDevice-net.csproj -c Release -o nupkg
-          Get-ChildItem nupkg
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $nativePackage = Get-Item nupkg/iMobileDevice-net.*.nupkg
+          $version = $nativePackage.BaseName.Substring('iMobileDevice-net.'.Length)
+          dotnet pack iMobileDevice.Managed/iMobileDevice.Managed.csproj -c Release -o nupkg "-p:PackageVersion=$version"
 
       - name: Inspect NuGet contents
         shell: pwsh
         run: |
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $pkg = Get-ChildItem nupkg/*.nupkg | Select-Object -First 1
-          $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
-          $zip.Entries | Where-Object { $_.FullName -like 'runtimes/*' -or $_.FullName -like 'lib/*' } | Select-Object -ExpandProperty FullName
-          $zip.Dispose()
+          foreach ($pkg in Get-ChildItem nupkg/*.nupkg) {
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+            try {
+              if ($pkg.Name -like 'iMobileDevice.Managed.*' -and !$zip.GetEntry('lib/net8.0/iMobileDevice.Managed.dll')) {
+                throw "Missing managed assembly in $($pkg.Name)"
+              }
+              $zip.Entries | Where-Object { $_.FullName -like 'runtimes/*' -or $_.FullName -like 'lib/*' } | Select-Object -ExpandProperty FullName
+            } finally {
+              $zip.Dispose()
+            }
+          }
 
       - name: Upload NuGet package
         uses: actions/upload-artifact@v4
