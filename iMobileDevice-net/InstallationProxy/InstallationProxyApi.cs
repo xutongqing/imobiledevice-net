@@ -645,7 +645,7 @@ namespace iMobileDevice.InstallationProxy
         /// </remarks>
         public virtual void instproxy_client_options_set_return_attributes(PlistHandle clientOptions)
         {
-            this.instproxy_client_options_set_return_attributes(clientOptions, System.Array.Empty<string>());
+            this.instproxy_client_options_set_return_attributes(clientOptions, new string[0]);
         }
         
         public virtual void instproxy_client_options_set_return_attributes(PlistHandle clientOptions, params string[] attributes)
