@@ -89,5 +89,70 @@ namespace iMobileDevice.Plist
             plistBin = ((string)plistBinMarshaler.MarshalNativeToManaged(plistBinNative));
             plistBinMarshaler.CleanUpNativeData(plistBinNative);
         }
+
+        public static PlistError plist_to_json(PlistHandle plist, out string plistJson, ref uint length, int prettify)
+        {
+            System.Runtime.InteropServices.ICustomMarshaler marshaler = NativeStringMarshaler.GetInstance(null);
+            System.IntPtr nativePtr = System.IntPtr.Zero;
+            PlistError ret = PlistNativeMethods.plist_to_json(plist, out nativePtr, ref length, prettify);
+            plistJson = nativePtr != System.IntPtr.Zero ? (string)marshaler.MarshalNativeToManaged(nativePtr) : null;
+            if (nativePtr != System.IntPtr.Zero)
+            {
+                PlistNativeMethods.plist_mem_free(nativePtr);
+            }
+            return ret;
+        }
+
+        public static PlistError plist_to_json_with_options(PlistHandle plist, out string plistJson, ref uint length, PlistWriteOptions options)
+        {
+            System.Runtime.InteropServices.ICustomMarshaler marshaler = NativeStringMarshaler.GetInstance(null);
+            System.IntPtr nativePtr = System.IntPtr.Zero;
+            PlistError ret = PlistNativeMethods.plist_to_json_with_options(plist, out nativePtr, ref length, options);
+            plistJson = nativePtr != System.IntPtr.Zero ? (string)marshaler.MarshalNativeToManaged(nativePtr) : null;
+            if (nativePtr != System.IntPtr.Zero)
+            {
+                PlistNativeMethods.plist_mem_free(nativePtr);
+            }
+            return ret;
+        }
+
+        public static PlistError plist_to_openstep(PlistHandle plist, out string plistOpenstep, ref uint length, int prettify)
+        {
+            System.Runtime.InteropServices.ICustomMarshaler marshaler = NativeStringMarshaler.GetInstance(null);
+            System.IntPtr nativePtr = System.IntPtr.Zero;
+            PlistError ret = PlistNativeMethods.plist_to_openstep(plist, out nativePtr, ref length, prettify);
+            plistOpenstep = nativePtr != System.IntPtr.Zero ? (string)marshaler.MarshalNativeToManaged(nativePtr) : null;
+            if (nativePtr != System.IntPtr.Zero)
+            {
+                PlistNativeMethods.plist_mem_free(nativePtr);
+            }
+            return ret;
+        }
+
+        public static PlistError plist_to_openstep_with_options(PlistHandle plist, out string plistOpenstep, ref uint length, PlistWriteOptions options)
+        {
+            System.Runtime.InteropServices.ICustomMarshaler marshaler = NativeStringMarshaler.GetInstance(null);
+            System.IntPtr nativePtr = System.IntPtr.Zero;
+            PlistError ret = PlistNativeMethods.plist_to_openstep_with_options(plist, out nativePtr, ref length, options);
+            plistOpenstep = nativePtr != System.IntPtr.Zero ? (string)marshaler.MarshalNativeToManaged(nativePtr) : null;
+            if (nativePtr != System.IntPtr.Zero)
+            {
+                PlistNativeMethods.plist_mem_free(nativePtr);
+            }
+            return ret;
+        }
+
+        public static PlistError plist_write_to_string(PlistHandle plist, out string output, ref uint length, PlistFormat format, PlistWriteOptions options)
+        {
+            System.Runtime.InteropServices.ICustomMarshaler marshaler = NativeStringMarshaler.GetInstance(null);
+            System.IntPtr nativePtr = System.IntPtr.Zero;
+            PlistError ret = PlistNativeMethods.plist_write_to_string(plist, out nativePtr, ref length, format, options);
+            output = nativePtr != System.IntPtr.Zero ? (string)marshaler.MarshalNativeToManaged(nativePtr) : null;
+            if (nativePtr != System.IntPtr.Zero)
+            {
+                PlistNativeMethods.plist_mem_free(nativePtr);
+            }
+            return ret;
+        }
     }
 }

@@ -260,5 +260,45 @@ namespace iMobileDevice.Recovery
             device.Api = this.Parent;
             return returnValue;
         }
+        
+        public virtual System.IntPtr irecv_version()
+        {
+            return RecoveryNativeMethods.irecv_version();
+        }
+        
+        public virtual int irecv_async_usb_control_transfer(RecoveryClientHandle client, byte bmRequestType, byte bRequest, ushort wValue, ushort wIndex, byte[] data, ushort wLength)
+        {
+            return RecoveryNativeMethods.irecv_async_usb_control_transfer(client, bmRequestType, bRequest, wValue, wIndex, data, wLength);
+        }
+        
+        public virtual int irecv_async_usb_control_transfer_with_cancel(RecoveryClientHandle client, byte bmRequestType, byte bRequest, ushort wValue, ushort wIndex, byte[] data, ushort wLength, uint uTime)
+        {
+            return RecoveryNativeMethods.irecv_async_usb_control_transfer_with_cancel(client, bmRequestType, bRequest, wValue, wIndex, data, wLength, uTime);
+        }
+        
+        public virtual int irecv_usb_interrupt_transfer(RecoveryClientHandle client, byte endpoint, byte[] data, int length, ref int transferred, uint timeout)
+        {
+            return RecoveryNativeMethods.irecv_usb_interrupt_transfer(client, endpoint, data, length, ref transferred, timeout);
+        }
+        
+        public virtual RecoveryError irecv_send_command_breq(RecoveryClientHandle client, string command, byte bRequest)
+        {
+            return RecoveryNativeMethods.irecv_send_command_breq(client, command, bRequest);
+        }
+        
+        public virtual int irecv_command_is_breq(string command)
+        {
+            return RecoveryNativeMethods.irecv_command_is_breq(command);
+        }
+        
+        public virtual RecoveryError irecv_setenv_np(RecoveryClientHandle client, string variable, string value)
+        {
+            return RecoveryNativeMethods.irecv_setenv_np(client, variable, value);
+        }
+        
+        public virtual RecoveryError irecv_devices_add(string productType, string hardwareModel, uint boardId, uint chipId, string displayName)
+        {
+            return RecoveryNativeMethods.irecv_devices_add(productType, hardwareModel, boardId, chipId, displayName);
+        }
     }
 }

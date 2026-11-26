@@ -1183,5 +1183,113 @@ namespace iMobileDevice.Plist
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_data_val_contains", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern int plist_data_val_contains(PlistHandle datanode, ref char cmpval, uint n);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_new_int", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistHandle plist_new_int(long val);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_new_unix_date", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistHandle plist_new_unix_date(long sec);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_new_null", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistHandle plist_new_null();
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_array_free_iter", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_array_free_iter(System.IntPtr iter);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_free_iter", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_dict_free_iter(System.IntPtr iter);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_get_bool", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern byte plist_dict_get_bool(PlistHandle dict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_get_int", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern long plist_dict_get_int(PlistHandle dict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_get_uint", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern ulong plist_dict_get_uint(PlistHandle dict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_copy_item", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_dict_copy_item(PlistHandle targetDict, PlistHandle sourceDict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string altSourceKey);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_copy_bool", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_dict_copy_bool(PlistHandle targetDict, PlistHandle sourceDict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string altSourceKey);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_copy_int", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_dict_copy_int(PlistHandle targetDict, PlistHandle sourceDict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string altSourceKey);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_copy_uint", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_dict_copy_uint(PlistHandle targetDict, PlistHandle sourceDict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string altSourceKey);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_copy_data", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_dict_copy_data(PlistHandle targetDict, PlistHandle sourceDict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string altSourceKey);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_dict_copy_string", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_dict_copy_string(PlistHandle targetDict, PlistHandle sourceDict, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string key, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string altSourceKey);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_get_int_val", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_get_int_val(PlistHandle node, ref long val);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_get_unix_date_val", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_get_unix_date_val(PlistHandle node, ref long sec);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_set_int_val", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_set_int_val(PlistHandle node, long val);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_set_unix_date_val", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_set_unix_date_val(PlistHandle node, long sec);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_to_json", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_to_json(PlistHandle plist, out System.IntPtr plistJson, ref uint length, int prettify);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_to_json_with_options", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_to_json_with_options(PlistHandle plist, out System.IntPtr plistJson, ref uint length, PlistWriteOptions options);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_to_openstep", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_to_openstep(PlistHandle plist, out System.IntPtr plistOpenstep, ref uint length, int prettify);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_to_openstep_with_options", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_to_openstep_with_options(PlistHandle plist, out System.IntPtr plistOpenstep, ref uint length, PlistWriteOptions options);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_from_json", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_from_json([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string json, uint length, out PlistHandle plist);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_from_openstep", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_from_openstep([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string openstep, uint length, out PlistHandle plist);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_read_from_file", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_read_from_file([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string filename, out PlistHandle plist, out PlistFormat format);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_write_to_string", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_write_to_string(PlistHandle plist, out System.IntPtr output, ref uint length, PlistFormat format, PlistWriteOptions options);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_write_to_stream", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_write_to_stream(PlistHandle plist, System.IntPtr stream, PlistFormat format, PlistWriteOptions options);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_write_to_file", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern PlistError plist_write_to_file(PlistHandle plist, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string filename, PlistFormat format, PlistWriteOptions options);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_print", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_print(PlistHandle plist);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_int_val_is_negative", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int plist_int_val_is_negative(PlistHandle intnode);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_int_val_compare", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int plist_int_val_compare(PlistHandle uintnode, long cmpval);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_unix_date_val_compare", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int plist_unix_date_val_compare(PlistHandle datenode, long cmpval);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_sort", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_sort(PlistHandle plist);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_mem_free", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_mem_free(System.IntPtr ptr);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="plist_set_debug", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern void plist_set_debug(int debug);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(PlistNativeMethods.LibraryName, EntryPoint="libplist_version", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern System.IntPtr libplist_version();
     }
 }

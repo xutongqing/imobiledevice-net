@@ -433,5 +433,11 @@ namespace iMobileDevice.Usbmuxd
         /// </returns>
         [System.Runtime.InteropServices.DllImportAttribute(UsbmuxdNativeMethods.LibraryName, EntryPoint="usbmuxd_get_tcp_endpoint", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern int usbmuxd_get_tcp_endpoint(out System.IntPtr host, ref ushort port);
+        
+        /// <summary>
+        /// Returns a static string of the libusbmuxd version.
+        /// </summary>
+        [System.Runtime.InteropServices.DllImportAttribute(UsbmuxdNativeMethods.LibraryName, EntryPoint="libusbmuxd_version", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern System.IntPtr libusbmuxd_version();
     }
 }

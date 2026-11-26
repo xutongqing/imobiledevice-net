@@ -502,5 +502,13 @@ namespace iMobileDevice.Usbmuxd
         {
             return UsbmuxdNativeMethods.usbmuxd_get_tcp_endpoint(out host, ref port);
         }
+        
+        /// <summary>
+        /// Returns a static string of the libusbmuxd version.
+        /// </summary>
+        public virtual System.IntPtr libusbmuxd_version()
+        {
+            return UsbmuxdNativeMethods.libusbmuxd_version();
+        }
     }
 }

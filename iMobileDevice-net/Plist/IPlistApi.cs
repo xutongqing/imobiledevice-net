@@ -1108,5 +1108,77 @@ namespace iMobileDevice.Plist
         /// or 0 if not.
         /// </returns>
         int plist_data_val_contains(PlistHandle datanode, ref char cmpval, uint n);
+        
+        PlistHandle plist_new_int(long val);
+        
+        PlistHandle plist_new_unix_date(long sec);
+        
+        PlistHandle plist_new_null();
+        
+        void plist_array_free_iter(System.IntPtr iter);
+        
+        void plist_dict_free_iter(System.IntPtr iter);
+        
+        byte plist_dict_get_bool(PlistHandle dict, string key);
+        
+        long plist_dict_get_int(PlistHandle dict, string key);
+        
+        ulong plist_dict_get_uint(PlistHandle dict, string key);
+        
+        PlistError plist_dict_copy_item(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey);
+        
+        PlistError plist_dict_copy_bool(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey);
+        
+        PlistError plist_dict_copy_int(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey);
+        
+        PlistError plist_dict_copy_uint(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey);
+        
+        PlistError plist_dict_copy_data(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey);
+        
+        PlistError plist_dict_copy_string(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey);
+        
+        void plist_get_int_val(PlistHandle node, ref long val);
+        
+        void plist_get_unix_date_val(PlistHandle node, ref long sec);
+        
+        void plist_set_int_val(PlistHandle node, long val);
+        
+        void plist_set_unix_date_val(PlistHandle node, long sec);
+        
+        PlistError plist_to_json(PlistHandle plist, out string plistJson, ref uint length, int prettify);
+        
+        PlistError plist_to_json_with_options(PlistHandle plist, out string plistJson, ref uint length, PlistWriteOptions options);
+        
+        PlistError plist_to_openstep(PlistHandle plist, out string plistOpenstep, ref uint length, int prettify);
+        
+        PlistError plist_to_openstep_with_options(PlistHandle plist, out string plistOpenstep, ref uint length, PlistWriteOptions options);
+        
+        PlistError plist_from_json(string json, uint length, out PlistHandle plist);
+        
+        PlistError plist_from_openstep(string openstep, uint length, out PlistHandle plist);
+        
+        PlistError plist_read_from_file(string filename, out PlistHandle plist, out PlistFormat format);
+        
+        PlistError plist_write_to_string(PlistHandle plist, out string output, ref uint length, PlistFormat format, PlistWriteOptions options);
+        
+        PlistError plist_write_to_stream(PlistHandle plist, System.IntPtr stream, PlistFormat format, PlistWriteOptions options);
+        
+        PlistError plist_write_to_file(PlistHandle plist, string filename, PlistFormat format, PlistWriteOptions options);
+        
+        void plist_print(PlistHandle plist);
+        
+        int plist_int_val_is_negative(PlistHandle intnode);
+        
+        int plist_int_val_compare(PlistHandle uintnode, long cmpval);
+        
+        int plist_unix_date_val_compare(PlistHandle datenode, long cmpval);
+        
+        void plist_sort(PlistHandle plist);
+        
+        void plist_mem_free(System.IntPtr ptr);
+        
+        void plist_set_debug(int debug);
+        
+        System.IntPtr libplist_version();
     }
 }

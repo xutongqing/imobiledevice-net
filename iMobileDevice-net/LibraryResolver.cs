@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -23,203 +24,284 @@ namespace iMobileDevice
         {
             if (libraryName == Plist.PlistNativeMethods.LibraryName)
             {
-                return LoadPlistLibrary();
+                return LoadPlistLibrary(assembly, searchPath);
             }
 
             if (libraryName == Usbmuxd.UsbmuxdNativeMethods.LibraryName)
             {
-                return LoadUsbmuxdLibrary();
+                return LoadUsbmuxdLibrary(assembly, searchPath);
             }
 
             if (libraryName == iDevice.iDeviceNativeMethods.LibraryName)
             {
-                return LoadMobileDeviceLibrary();
+                return LoadMobileDeviceLibrary(assembly, searchPath);
             }
 
             if (libraryName == iDeviceActivation.iDeviceActivationNativeMethods.LibraryName)
             {
-                return LoadDeviceActivationLibrary();
+                return LoadDeviceActivationLibrary(assembly, searchPath);
+            }
+
+            if (libraryName == Recovery.RecoveryNativeMethods.LibraryName)
+            {
+                return LoadRecoveryLibrary(assembly, searchPath);
             }
 
             return IntPtr.Zero;
         }
 
-        private static IntPtr LoadPlistLibrary()
+        private static IntPtr TryLoadCandidates(Assembly assembly, DllImportSearchPath? searchPath, params string[] candidates)
         {
-            IntPtr lib = IntPtr.Zero;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            foreach (var name in candidates)
             {
-                if (NativeLibrary.TryLoad("libplist-2.0.so.4", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libplist-2.0.so.3", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libplist-2.0.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libplist.so.3", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libplist.so", Assembly.GetExecutingAssembly(), null, out lib))
+                if (NativeLibrary.TryLoad(name, assembly, searchPath, out IntPtr lib))
                 {
                     return lib;
                 }
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            string baseDir = AppContext.BaseDirectory;
+            string rid = GetRuntimeIdentifier();
+            string runtimeNativeDir = rid != null ? Path.Combine(baseDir, "runtimes", rid, "native") : null;
+
+            foreach (var name in candidates)
             {
-                if (NativeLibrary.TryLoad("libplist-2.0.4.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+                string directPath = Path.Combine(baseDir, name);
+                if (File.Exists(directPath) && NativeLibrary.TryLoad(directPath, out IntPtr lib))
                 {
                     return lib;
                 }
-                else if (NativeLibrary.TryLoad("libplist-2.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
+
+                if (runtimeNativeDir != null)
                 {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libplist.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
+                    string ridPath = Path.Combine(runtimeNativeDir, name);
+                    if (File.Exists(ridPath) && NativeLibrary.TryLoad(ridPath, out lib))
+                    {
+                        return lib;
+                    }
                 }
             }
 
             return IntPtr.Zero;
         }
 
-        private static IntPtr LoadUsbmuxdLibrary()
+        private static string GetRuntimeIdentifier()
         {
-            IntPtr lib = IntPtr.Zero;
+            string arch = RuntimeInformation.ProcessArchitecture switch
+            {
+                Architecture.X64 => "x64",
+                Architecture.X86 => "x86",
+                Architecture.Arm64 => "arm64",
+                Architecture.Arm => "arm",
+                _ => null,
+            };
+
+            if (arch == null)
+            {
+                return null;
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "win-" + arch;
+            }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                if (NativeLibrary.TryLoad("libusbmuxd-2.0.so.7", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd-2.0.so.6", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd-2.0.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd.so.6", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd.so.4", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    // Not all symbols will be available in libusbmuxd.so.4
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
+                return "linux-" + arch;
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                if (NativeLibrary.TryLoad("libusbmuxd-2.0.7.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd-2.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libusbmuxd.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
+                return "osx-" + arch;
+            }
+
+            return null;
+        }
+
+        private static IntPtr LoadPlistLibrary(Assembly assembly, DllImportSearchPath? searchPath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libplist-2.0-4.dll",
+                    "libplist-2.0-3.dll",
+                    "libplist-2.0.dll",
+                    "plist.dll");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libplist-2.0.so.4",
+                    "libplist-2.0.so.3",
+                    "libplist-2.0.so",
+                    "libplist.so.3",
+                    "libplist.so");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libplist-2.0.4.dylib",
+                    "libplist-2.0.dylib",
+                    "libplist.dylib");
             }
 
             return IntPtr.Zero;
         }
 
-        private static IntPtr LoadMobileDeviceLibrary()
+        private static IntPtr LoadUsbmuxdLibrary(Assembly assembly, DllImportSearchPath? searchPath)
         {
-            IntPtr lib = IntPtr.Zero;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libusbmuxd-2.0-7.dll",
+                    "libusbmuxd-2.0-6.dll",
+                    "libusbmuxd-2.0.dll",
+                    "usbmuxd.dll");
+            }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                if (NativeLibrary.TryLoad("libimobiledevice-1.0.so.6", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libimobiledevice-1.0.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libimobiledevice.so.6", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libimobiledevice.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libusbmuxd-2.0.so.7",
+                    "libusbmuxd-2.0.so.6",
+                    "libusbmuxd-2.0.so",
+                    "libusbmuxd.so.6",
+                    "libusbmuxd.so.4",
+                    "libusbmuxd.so");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                if (NativeLibrary.TryLoad("libimobiledevice-1.0.6.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libimobiledevice-1.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libimobiledevice.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libusbmuxd-2.0.7.dylib",
+                    "libusbmuxd-2.0.dylib",
+                    "libusbmuxd.dylib");
             }
 
             return IntPtr.Zero;
         }
 
-        private static IntPtr LoadDeviceActivationLibrary()
+        private static IntPtr LoadMobileDeviceLibrary(Assembly assembly, DllImportSearchPath? searchPath)
         {
-            IntPtr lib = IntPtr.Zero;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libimobiledevice-1.0-6.dll",
+                    "libimobiledevice-1.0.dll",
+                    "imobiledevice.dll");
+            }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                if (NativeLibrary.TryLoad("libideviceactivation-1.0.so.2", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libideviceactivation-1.0.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libideviceactivation.so.2", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libideviceactivation.so", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libimobiledevice-1.0.so.6",
+                    "libimobiledevice-1.0.so",
+                    "libimobiledevice.so.6",
+                    "libimobiledevice.so");
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                if (NativeLibrary.TryLoad("libideviceactivation-1.0.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
-                else if (NativeLibrary.TryLoad("libideviceactivation.dylib", Assembly.GetExecutingAssembly(), null, out lib))
-                {
-                    return lib;
-                }
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libimobiledevice-1.0.6.dylib",
+                    "libimobiledevice-1.0.dylib",
+                    "libimobiledevice.dylib");
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private static IntPtr LoadDeviceActivationLibrary(Assembly assembly, DllImportSearchPath? searchPath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libideviceactivation-1.0-2.dll",
+                    "libideviceactivation-1.0.dll",
+                    "ideviceactivation.dll");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libideviceactivation-1.0.so.2",
+                    "libideviceactivation-1.0.so",
+                    "libideviceactivation.so.2",
+                    "libideviceactivation.so");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libideviceactivation-1.0.2.dylib",
+                    "libideviceactivation-1.0.dylib",
+                    "libideviceactivation.dylib");
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private static IntPtr LoadRecoveryLibrary(Assembly assembly, DllImportSearchPath? searchPath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libirecovery-1.0-5.dll",
+                    "libirecovery-1.0-4.dll",
+                    "libirecovery-1.0-3.dll",
+                    "libirecovery-1.0.dll",
+                    "irecovery.dll");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libirecovery-1.0.so.5",
+                    "libirecovery-1.0.so.4",
+                    "libirecovery-1.0.so.3",
+                    "libirecovery-1.0.so",
+                    "libirecovery.so");
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return TryLoadCandidates(
+                    assembly,
+                    searchPath,
+                    "libirecovery-1.0.5.dylib",
+                    "libirecovery-1.0.dylib",
+                    "libirecovery.dylib");
             }
 
             return IntPtr.Zero;

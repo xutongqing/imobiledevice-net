@@ -1413,5 +1413,215 @@ namespace iMobileDevice.Plist
         {
             return PlistNativeMethods.plist_data_val_contains(datanode, ref cmpval, n);
         }
+        
+        public virtual PlistHandle plist_new_int(long val)
+        {
+            PlistHandle returnValue = PlistNativeMethods.plist_new_int(val);
+            if (returnValue != null)
+            {
+                returnValue.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        public virtual PlistHandle plist_new_unix_date(long sec)
+        {
+            PlistHandle returnValue = PlistNativeMethods.plist_new_unix_date(sec);
+            if (returnValue != null)
+            {
+                returnValue.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        public virtual PlistHandle plist_new_null()
+        {
+            PlistHandle returnValue = PlistNativeMethods.plist_new_null();
+            if (returnValue != null)
+            {
+                returnValue.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        public virtual void plist_array_free_iter(System.IntPtr iter)
+        {
+            PlistNativeMethods.plist_array_free_iter(iter);
+        }
+        
+        public virtual void plist_dict_free_iter(System.IntPtr iter)
+        {
+            PlistNativeMethods.plist_dict_free_iter(iter);
+        }
+        
+        public virtual byte plist_dict_get_bool(PlistHandle dict, string key)
+        {
+            return PlistNativeMethods.plist_dict_get_bool(dict, key);
+        }
+        
+        public virtual long plist_dict_get_int(PlistHandle dict, string key)
+        {
+            return PlistNativeMethods.plist_dict_get_int(dict, key);
+        }
+        
+        public virtual ulong plist_dict_get_uint(PlistHandle dict, string key)
+        {
+            return PlistNativeMethods.plist_dict_get_uint(dict, key);
+        }
+        
+        public virtual PlistError plist_dict_copy_item(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey)
+        {
+            return PlistNativeMethods.plist_dict_copy_item(targetDict, sourceDict, key, altSourceKey);
+        }
+        
+        public virtual PlistError plist_dict_copy_bool(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey)
+        {
+            return PlistNativeMethods.plist_dict_copy_bool(targetDict, sourceDict, key, altSourceKey);
+        }
+        
+        public virtual PlistError plist_dict_copy_int(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey)
+        {
+            return PlistNativeMethods.plist_dict_copy_int(targetDict, sourceDict, key, altSourceKey);
+        }
+        
+        public virtual PlistError plist_dict_copy_uint(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey)
+        {
+            return PlistNativeMethods.plist_dict_copy_uint(targetDict, sourceDict, key, altSourceKey);
+        }
+        
+        public virtual PlistError plist_dict_copy_data(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey)
+        {
+            return PlistNativeMethods.plist_dict_copy_data(targetDict, sourceDict, key, altSourceKey);
+        }
+        
+        public virtual PlistError plist_dict_copy_string(PlistHandle targetDict, PlistHandle sourceDict, string key, string altSourceKey)
+        {
+            return PlistNativeMethods.plist_dict_copy_string(targetDict, sourceDict, key, altSourceKey);
+        }
+        
+        public virtual void plist_get_int_val(PlistHandle node, ref long val)
+        {
+            PlistNativeMethods.plist_get_int_val(node, ref val);
+        }
+        
+        public virtual void plist_get_unix_date_val(PlistHandle node, ref long sec)
+        {
+            PlistNativeMethods.plist_get_unix_date_val(node, ref sec);
+        }
+        
+        public virtual void plist_set_int_val(PlistHandle node, long val)
+        {
+            PlistNativeMethods.plist_set_int_val(node, val);
+        }
+        
+        public virtual void plist_set_unix_date_val(PlistHandle node, long sec)
+        {
+            PlistNativeMethods.plist_set_unix_date_val(node, sec);
+        }
+        
+        public virtual PlistError plist_to_json(PlistHandle plist, out string plistJson, ref uint length, int prettify)
+        {
+            return PlistNativeMethods.plist_to_json(plist, out plistJson, ref length, prettify);
+        }
+        
+        public virtual PlistError plist_to_json_with_options(PlistHandle plist, out string plistJson, ref uint length, PlistWriteOptions options)
+        {
+            return PlistNativeMethods.plist_to_json_with_options(plist, out plistJson, ref length, options);
+        }
+        
+        public virtual PlistError plist_to_openstep(PlistHandle plist, out string plistOpenstep, ref uint length, int prettify)
+        {
+            return PlistNativeMethods.plist_to_openstep(plist, out plistOpenstep, ref length, prettify);
+        }
+        
+        public virtual PlistError plist_to_openstep_with_options(PlistHandle plist, out string plistOpenstep, ref uint length, PlistWriteOptions options)
+        {
+            return PlistNativeMethods.plist_to_openstep_with_options(plist, out plistOpenstep, ref length, options);
+        }
+        
+        public virtual PlistError plist_from_json(string json, uint length, out PlistHandle plist)
+        {
+            PlistError returnValue = PlistNativeMethods.plist_from_json(json, length, out plist);
+            if (plist != null)
+            {
+                plist.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        public virtual PlistError plist_from_openstep(string openstep, uint length, out PlistHandle plist)
+        {
+            PlistError returnValue = PlistNativeMethods.plist_from_openstep(openstep, length, out plist);
+            if (plist != null)
+            {
+                plist.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        public virtual PlistError plist_read_from_file(string filename, out PlistHandle plist, out PlistFormat format)
+        {
+            PlistError returnValue = PlistNativeMethods.plist_read_from_file(filename, out plist, out format);
+            if (plist != null)
+            {
+                plist.Api = this.Parent;
+            }
+            return returnValue;
+        }
+        
+        public virtual PlistError plist_write_to_string(PlistHandle plist, out string output, ref uint length, PlistFormat format, PlistWriteOptions options)
+        {
+            return PlistNativeMethods.plist_write_to_string(plist, out output, ref length, format, options);
+        }
+        
+        public virtual PlistError plist_write_to_stream(PlistHandle plist, System.IntPtr stream, PlistFormat format, PlistWriteOptions options)
+        {
+            return PlistNativeMethods.plist_write_to_stream(plist, stream, format, options);
+        }
+        
+        public virtual PlistError plist_write_to_file(PlistHandle plist, string filename, PlistFormat format, PlistWriteOptions options)
+        {
+            return PlistNativeMethods.plist_write_to_file(plist, filename, format, options);
+        }
+        
+        public virtual void plist_print(PlistHandle plist)
+        {
+            PlistNativeMethods.plist_print(plist);
+        }
+        
+        public virtual int plist_int_val_is_negative(PlistHandle intnode)
+        {
+            return PlistNativeMethods.plist_int_val_is_negative(intnode);
+        }
+        
+        public virtual int plist_int_val_compare(PlistHandle uintnode, long cmpval)
+        {
+            return PlistNativeMethods.plist_int_val_compare(uintnode, cmpval);
+        }
+        
+        public virtual int plist_unix_date_val_compare(PlistHandle datenode, long cmpval)
+        {
+            return PlistNativeMethods.plist_unix_date_val_compare(datenode, cmpval);
+        }
+        
+        public virtual void plist_sort(PlistHandle plist)
+        {
+            PlistNativeMethods.plist_sort(plist);
+        }
+        
+        public virtual void plist_mem_free(System.IntPtr ptr)
+        {
+            PlistNativeMethods.plist_mem_free(ptr);
+        }
+        
+        public virtual void plist_set_debug(int debug)
+        {
+            PlistNativeMethods.plist_set_debug(debug);
+        }
+        
+        public virtual System.IntPtr libplist_version()
+        {
+            return PlistNativeMethods.libplist_version();
+        }
     }
 }

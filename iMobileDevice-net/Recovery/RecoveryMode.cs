@@ -38,5 +38,7 @@ namespace iMobileDevice.Recovery
         KWtfMode = 4642,
         
         KDfuMode = 4647,
+        
+        KPortDfuMode = 61460,
     }
 }

@@ -23,6 +23,7 @@
   <ItemGroup>
     <PackageReference Include="NerdBank.GitVersioning" Version="3.4.244" PrivateAssets="all" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" Condition="'$(TargetFramework)' == 'net45'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,6 +54,16 @@
       <Pack>true</Pack>
     </Content>
     
+    <!-- Linux x64 files -->
+    <Content Include="$(SYSTEM_ARTIFACTSDIRECTORY)/libimobiledevice/linux-x64/lib/*.so*">
+      <PackagePath>runtimes/linux-x64/native/%(Filename)%(Extension)</PackagePath>
+      <Pack>true</Pack>
+    </Content>
+    <Content Include="$(SYSTEM_ARTIFACTSDIRECTORY)/libimobiledevice/linux-x64/bin/*">
+      <PackagePath>runtimes/linux-x64/native/%(Filename)%(Extension)</PackagePath>
+      <Pack>true</Pack>
+    </Content>
+
     <!-- For Ubuntu Linux, we now recommend you use our PPA feed
          https://launchpad.net/~quamotion/+archive/ubuntu/ppa;
          but we keep the Ubuntu 16.04 archives for backward compatibility
@@ -103,6 +114,10 @@
       <PackagePath>runtimes/ubuntu.16.04-x64/native/%(Filename)%(Extension)</PackagePath>
       <Pack>true</Pack>
     </Content>
+    <Content Include="runtimes/linux-x64/native/*">
+      <PackagePath>runtimes/linux-x64/native/%(Filename)%(Extension)</PackagePath>
+      <Pack>true</Pack>
+    </Content>
 
     <!-- Build files -->
     <Content Include="build/net45/*.*">
@@ -142,7 +157,7 @@
       </Line>
       <LineText Include="%(Line.Text)" />
     </ItemGroup>
-    <WriteLinesToFile File="../iMobileDevice.IntegrationTests.netcoreapp20/Directory.Build.props" Lines="@(LineText)" Overwrite="true" />
-    <WriteLinesToFile File="../iMobileDevice.IntegrationTests.net45/Directory.Build.props" Lines="@(LineText)" Overwrite="true" />
+    <WriteLinesToFile Condition="Exists('../iMobileDevice.IntegrationTests.netcoreapp20')" File="../iMobileDevice.IntegrationTests.netcoreapp20/Directory.Build.props" Lines="@(LineText)" Overwrite="true" />
+    <WriteLinesToFile Condition="Exists('../iMobileDevice.IntegrationTests.net45')" File="../iMobileDevice.IntegrationTests.net45/Directory.Build.props" Lines="@(LineText)" Overwrite="true" />
   </Target>
 </Project>

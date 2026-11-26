@@ -144,5 +144,29 @@ namespace iMobileDevice.Recovery
         
         [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_devices_get_device_by_hardware_model", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
         public static extern RecoveryError irecv_devices_get_device_by_hardware_model([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string hardwareModel, out RecoveryDeviceHandle device);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_version", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern System.IntPtr irecv_version();
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_async_usb_control_transfer", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int irecv_async_usb_control_transfer(RecoveryClientHandle client, byte bmRequestType, byte bRequest, ushort wValue, ushort wIndex, byte[] data, ushort wLength);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_async_usb_control_transfer_with_cancel", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int irecv_async_usb_control_transfer_with_cancel(RecoveryClientHandle client, byte bmRequestType, byte bRequest, ushort wValue, ushort wIndex, byte[] data, ushort wLength, uint uTime);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_usb_interrupt_transfer", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int irecv_usb_interrupt_transfer(RecoveryClientHandle client, byte endpoint, byte[] data, int length, ref int transferred, uint timeout);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_send_command_breq", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern RecoveryError irecv_send_command_breq(RecoveryClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string command, byte bRequest);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_command_is_breq", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern int irecv_command_is_breq([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string command);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_setenv_np", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern RecoveryError irecv_setenv_np(RecoveryClientHandle client, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string variable, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string value);
+        
+        [System.Runtime.InteropServices.DllImportAttribute(RecoveryNativeMethods.LibraryName, EntryPoint="irecv_devices_add", CallingConvention=System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        public static extern RecoveryError irecv_devices_add([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string productType, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string hardwareModel, uint boardId, uint chipId, [System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.LPStr)] string displayName);
     }
 }

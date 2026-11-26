@@ -1,0 +1,230 @@
+name: Build Native Libraries & NuGet Package
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake libtool pkg-config build-essential git \
+            libssl-dev libcurl4-openssl-dev libxml2-dev libusb-1.0-0-dev \
+            patchelf
+
+      - name: Build upstream native libraries (linux-x64)
+        run: |
+          set -euo pipefail
+          PREFIX="$PWD/native-build/linux-x64"
+          SRC="$PWD/native-src"
+          mkdir -p "$PREFIX" "$SRC"
+
+          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+          export CPPFLAGS="-I$PREFIX/include"
+          export LDFLAGS="-L$PREFIX/lib -Wl,-rpath,\$ORIGIN"
+          NPROC=$(nproc)
+
+          build_repo() {
+            local name="$1"
+            shift
+            echo "=== Building $name ==="
+            git clone --depth 1 "https://github.com/libimobiledevice/${name}.git" "$SRC/$name"
+            pushd "$SRC/$name"
+            ./autogen.sh --prefix="$PREFIX" --disable-static --enable-shared "$@"
+            make -j"$NPROC"
+            make install
+            popd
+          }
+
+          build_repo libplist --without-cython
+          build_repo libimobiledevice-glue
+          build_repo libusbmuxd
+          build_repo libtatsu
+          build_repo libimobiledevice --without-cython
+          build_repo libirecovery
+          build_repo libideviceactivation
+
+          STAGE="$PWD/artifacts/libimobiledevice/linux-x64/lib"
+          mkdir -p "$STAGE"
+          for f in "$PREFIX"/lib/*.so*; do
+            [ -e "$f" ] || continue
+            base=$(basename "$f")
+            # Copy actual target file for each SONAME entry (avoid broken symlinks in zip/nupkg)
+            cp -L "$f" "$STAGE/$base"
+          done
+          for f in "$STAGE"/*.so*; do
+            patchelf --set-rpath '$ORIGIN' "$f" || true
+          done
+          ls -la "$STAGE"
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build and run native smoke tests (linux-x64)
+        env:
+          DOTNET_ROLL_FORWARD: Major
+          IMOBILEDEVICE_RUN_NATIVE_SMOKE: "1"
+        run: |
+          dotnet build iMobileDevice.Tests/iMobileDevice.Tests.csproj -c Release
+          cp -f artifacts/libimobiledevice/linux-x64/lib/*.so* iMobileDevice.Tests/bin/Release/netcoreapp3.0/
+          export LD_LIBRARY_PATH="$PWD/artifacts/libimobiledevice/linux-x64/lib:${LD_LIBRARY_PATH:-}"
+          dotnet test iMobileDevice.Tests/iMobileDevice.Tests.csproj -c Release --no-build \
+            --filter "FullyQualifiedName~UpstreamSyncTests|FullyQualifiedName~HandleTests|FullyQualifiedName~NativeSmokeTests"
+
+      - name: Upload linux-x64 native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-linux-x64
+          path: artifacts/libimobiledevice/linux-x64
+
+  build-win-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2 (MINGW64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-autotools
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-libxml2
+            mingw-w64-x86_64-libusb
+            mingw-w64-x86_64-readline
+
+      - name: Build upstream native libraries (win-x64)
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          PREFIX="$PWD/native-build/win-x64"
+          SRC="$PWD/native-src"
+          mkdir -p "$PREFIX" "$SRC"
+
+          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:/mingw64/lib/pkgconfig"
+          export CPPFLAGS="-I$PREFIX/include"
+          export LDFLAGS="-L$PREFIX/lib"
+          export PATH="$PREFIX/bin:$PATH"
+          NPROC=$(nproc)
+
+          build_repo() {
+            local name="$1"
+            shift
+            echo "=== Building $name ==="
+            git clone --depth 1 "https://github.com/libimobiledevice/${name}.git" "$SRC/$name"
+            pushd "$SRC/$name"
+            ./autogen.sh --prefix="$PREFIX" --disable-static --enable-shared "$@"
+            make -j"$NPROC"
+            make install
+            popd
+          }
+
+          build_repo libplist --without-cython
+          build_repo libimobiledevice-glue
+          build_repo libusbmuxd
+          build_repo libtatsu
+          build_repo libimobiledevice --without-cython
+          build_repo libirecovery
+          build_repo libideviceactivation
+
+          STAGE="$PWD/artifacts/libimobiledevice/win-x64/bin"
+          mkdir -p "$STAGE"
+          cp -f "$PREFIX"/bin/*.dll "$STAGE/"
+
+          # Collect transitive MinGW64 runtime DLL dependencies
+          for pass in 1 2 3; do
+            for dll in "$STAGE"/*.dll; do
+              ldd "$dll" | awk '/\/mingw64\/bin\// { print $3 }' | while read -r dep; do
+                [ -f "$dep" ] && cp -n "$dep" "$STAGE/" || true
+              done
+            done
+          done
+
+          ls -la "$STAGE"
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build and run native smoke tests (win-x64)
+        shell: pwsh
+        env:
+          DOTNET_ROLL_FORWARD: Major
+          IMOBILEDEVICE_RUN_NATIVE_SMOKE: "1"
+        run: |
+          dotnet build iMobileDevice.Tests/iMobileDevice.Tests.csproj -c Release
+          Copy-Item -Force "artifacts/libimobiledevice/win-x64/bin/*.dll" "iMobileDevice.Tests/bin/Release/netcoreapp3.0/"
+          dotnet test iMobileDevice.Tests/iMobileDevice.Tests.csproj -c Release --no-build `
+            --filter "FullyQualifiedName~UpstreamSyncTests|FullyQualifiedName~HandleTests|FullyQualifiedName~NativeSmokeTests"
+
+      - name: Upload win-x64 native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-win-x64
+          path: artifacts/libimobiledevice/win-x64
+
+  pack-nuget:
+    needs: [ build-linux-x64, build-win-x64 ]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download linux-x64 native binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: native-linux-x64
+          path: native-artifacts/libimobiledevice/linux-x64
+
+      - name: Download win-x64 native binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: native-win-x64
+          path: native-artifacts/libimobiledevice/win-x64
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pack NuGet package
+        shell: pwsh
+        run: |
+          $env:SYSTEM_ARTIFACTSDIRECTORY = "$PWD/native-artifacts"
+          dotnet pack iMobileDevice-net/iMobileDevice-net.csproj -c Release -o nupkg
+          Get-ChildItem nupkg
+
+      - name: Inspect NuGet contents
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $pkg = Get-ChildItem nupkg/*.nupkg | Select-Object -First 1
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          $zip.Entries | Where-Object { $_.FullName -like 'runtimes/*' -or $_.FullName -like 'lib/*' } | Select-Object -ExpandProperty FullName
+          $zip.Dispose()
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: imobiledevice-net-nupkg
+          path: nupkg/*.nupkg

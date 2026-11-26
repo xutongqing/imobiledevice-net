@@ -11,9 +11,12 @@ namespace iMobileDevice.Tests
     using iMobileDevice.Lockdown;
     using iMobileDevice.MobileImageMounter;
     using iMobileDevice.OsTrace;
+    using iMobileDevice.Plist;
     using iMobileDevice.PropertyListService;
+    using iMobileDevice.Recovery;
     using iMobileDevice.ReverseProxy;
     using iMobileDevice.Service;
+    using iMobileDevice.Usbmuxd;
     using Xunit;
 
     public class UpstreamSyncTests
@@ -109,6 +112,21 @@ namespace iMobileDevice.Tests
             var rpEx = Assert.Throws<ReverseProxyException>(() => ReverseProxyError.MuxError.ThrowOnError("mux failed"));
             Assert.Equal(ReverseProxyError.MuxError, rpEx.ErrorCode);
             Assert.Contains("mux failed", rpEx.Message);
+
+            Assert.Equal(-1, (int)PlistType.None);
+            Assert.Equal(1, (int)PlistType.Int);
+            Assert.Equal(1, (int)PlistType.Uint);
+            Assert.Equal(10, (int)PlistType.Null);
+            Assert.Equal(3, (int)PlistFormat.Json);
+            Assert.Equal(4, (int)PlistFormat.Ostep);
+            Assert.Equal(0xf014, (int)RecoveryMode.KPortDfuMode);
+
+            Assert.False(PlistError.Success.IsError());
+            PlistError.Success.ThrowOnError();
+            Assert.True(PlistError.Parse.IsError());
+            var plEx = Assert.Throws<PlistException>(() => PlistError.Parse.ThrowOnError("bad json"));
+            Assert.Equal(PlistError.Parse, plEx.ErrorCode);
+            Assert.Contains("bad json", plEx.Message);
         }
 
         [Theory]
@@ -154,19 +172,64 @@ namespace iMobileDevice.Tests
         [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_client_start_proxy")]
         [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_client_set_status_callback")]
         [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_client_set_log_callback")]
-        [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_client_set_data_callback")]
-        [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_get_type")]
-        public void NativeMethodHasExpectedDllImport(Type nativeMethodsType, string entryPoint)
+        [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_client_set_data_callback", "imobiledevice")]
+        [InlineData(typeof(ReverseProxyNativeMethods), "reverse_proxy_get_type", "imobiledevice")]
+        [InlineData(typeof(PlistNativeMethods), "plist_new_int", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_new_unix_date", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_new_null", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_array_free_iter", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_free_iter", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_get_bool", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_get_int", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_get_uint", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_copy_item", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_copy_bool", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_copy_int", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_copy_uint", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_copy_data", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_dict_copy_string", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_get_int_val", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_get_unix_date_val", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_set_int_val", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_set_unix_date_val", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_to_json", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_to_json_with_options", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_to_openstep", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_to_openstep_with_options", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_from_json", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_from_openstep", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_read_from_file", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_write_to_string", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_write_to_stream", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_write_to_file", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_print", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_int_val_is_negative", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_int_val_compare", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_unix_date_val_compare", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_sort", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_mem_free", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "plist_set_debug", "plist")]
+        [InlineData(typeof(PlistNativeMethods), "libplist_version", "plist")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_version", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_async_usb_control_transfer", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_async_usb_control_transfer_with_cancel", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_usb_interrupt_transfer", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_send_command_breq", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_command_is_breq", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_setenv_np", "irecovery")]
+        [InlineData(typeof(RecoveryNativeMethods), "irecv_devices_add", "irecovery")]
+        [InlineData(typeof(UsbmuxdNativeMethods), "libusbmuxd_version", "usbmuxd")]
+        public void NativeMethodHasExpectedDllImport(Type nativeMethodsType, string entryPoint, string expectedLibrary = "imobiledevice")
         {
             var method = nativeMethodsType
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m => m.Name == entryPoint);
+                .FirstOrDefault(m => m.Name == entryPoint && m.GetCustomAttribute<DllImportAttribute>() != null);
 
             Assert.NotNull(method);
 
             var dllImport = method.GetCustomAttribute<DllImportAttribute>();
             Assert.NotNull(dllImport);
-            Assert.Equal("imobiledevice", dllImport.Value);
+            Assert.Equal(expectedLibrary, dllImport.Value);
             Assert.Equal(entryPoint, dllImport.EntryPoint);
             Assert.Equal(CallingConvention.Cdecl, dllImport.CallingConvention);
         }

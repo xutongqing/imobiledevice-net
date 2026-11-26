@@ -410,5 +410,10 @@ namespace iMobileDevice.Usbmuxd
         /// 0 on success or negative on error
         /// </returns>
         int usbmuxd_get_tcp_endpoint(out string host, ref ushort port);
+        
+        /// <summary>
+        /// Returns a static string of the libusbmuxd version.
+        /// </summary>
+        System.IntPtr libusbmuxd_version();
     }
 }

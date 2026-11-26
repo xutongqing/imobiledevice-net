@@ -108,5 +108,21 @@ namespace iMobileDevice.Recovery
         RecoveryError irecv_devices_get_device_by_product_type(string productType, out RecoveryDeviceHandle device);
         
         RecoveryError irecv_devices_get_device_by_hardware_model(string hardwareModel, out RecoveryDeviceHandle device);
+        
+        System.IntPtr irecv_version();
+        
+        int irecv_async_usb_control_transfer(RecoveryClientHandle client, byte bmRequestType, byte bRequest, ushort wValue, ushort wIndex, byte[] data, ushort wLength);
+        
+        int irecv_async_usb_control_transfer_with_cancel(RecoveryClientHandle client, byte bmRequestType, byte bRequest, ushort wValue, ushort wIndex, byte[] data, ushort wLength, uint uTime);
+        
+        int irecv_usb_interrupt_transfer(RecoveryClientHandle client, byte endpoint, byte[] data, int length, ref int transferred, uint timeout);
+        
+        RecoveryError irecv_send_command_breq(RecoveryClientHandle client, string command, byte bRequest);
+        
+        int irecv_command_is_breq(string command);
+        
+        RecoveryError irecv_setenv_np(RecoveryClientHandle client, string variable, string value);
+        
+        RecoveryError irecv_devices_add(string productType, string hardwareModel, uint boardId, uint chipId, string displayName);
     }
 }

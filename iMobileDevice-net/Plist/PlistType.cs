@@ -29,10 +29,16 @@ namespace iMobileDevice.Plist
     /// </summary>
     public enum PlistType : int
     {
+        /// <summary>
+        /// No type
+        /// </summary>
+        None = -1,
         
         Boolean = 0,
         
         Uint = 1,
+        
+        Int = 1,
         
         Real = 2,
         
@@ -50,9 +56,6 @@ namespace iMobileDevice.Plist
         
         Uid = 9,
         
-        /// <summary>
-        /// No type 
-        /// </summary>
-        None = 10,
+        Null = 10,
     }
 }
