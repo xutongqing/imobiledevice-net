@@ -19,9 +19,11 @@
 
 ## 首批任务卡
 
-优先开 A、B、C 三个 agent。若要同时补 P3，可以再开 D。复制下面这句，把编号替换成对应的字母即可分发。
+首批 A、B、C 可同时开始。打开下面对应的任务书，把全文分别发给三个 agent。各任务书包含已准备好的工作树、功能分支、上游源码、测试与 PR 交付要求。需要同时推进 P3 时可再分配 D。
 
-> 在 imobiledevice-net 仓库读取 `docs/managed-parallel-plan.md`，执行任务卡 A。从最新 origin/main 建独立工作树和卡片指定的分支，实现 C# 公开入口和回归测试，提交并推送分支，创建目标为 main 的 PR。在 PR 中列出对应的上游命令、已覆盖的选项、测试结果、真机待验项和需要集成的接口。由主线程统一合并。
+- [发给 A 的任务书 · AFC 递归文件传输](agent-a-afc-transfer.md)
+- [发给 B 的任务书 · 应用查询与 House Arrest 容器](agent-b-apps-house-arrest.md)
+- [发给 C 的任务书 · Bonjour 局域网发现](agent-c-bonjour.md)
 
 | 任务卡与分支 | 首个 PR 交付与代码范围 | 可以验收的结果 |
 | --- | --- | --- |
