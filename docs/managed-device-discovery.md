@@ -44,7 +44,7 @@ foreach (var result in report.Devices)
 
 ## Windows 真机验证 · 2026-11-27
 
-在 Windows 11 x64 上，从独立的本地 Release NuGet（`0.1.0-p1.local`）还原到空包缓存，由 .NET 8.0.33 控制台运行以下检查。
+在 Windows 11 x64 上，先验证本地 Release 包，再从提交 `31d13c5` 的 Actions 制品取出独立 NuGet `0.1.0-ci.14.1`。核对制品 SHA-256 后，从隔离包源和空缓存还原，在同一台 iPhone 上用 .NET 8.0.33 控制台复验下列结果。[打包作业](https://github.com/xutongqing/imobiledevice-net/actions/runs/45935667487/job/140298188880) · [实测 NuGet 制品](https://github.com/xutongqing/imobiledevice-net/actions/runs/45935667487/artifacts/15170466901)
 
 | 检查 | 结果 |
 | --- | --- |
