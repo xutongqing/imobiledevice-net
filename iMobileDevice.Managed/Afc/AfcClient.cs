@@ -8,9 +8,10 @@ using iMobileDevice.Managed.Lockdown;
 /// <summary>
 /// Pure managed client for Apple File Conduit (<c>com.apple.afc</c>).
 /// </summary>
-public sealed class AfcClient : IAsyncDisposable
+public sealed partial class AfcClient : IAsyncDisposable
 {
     public const string ServiceName = "com.apple.afc";
+    public const int DefaultTransferChunkSize = DefaultChunkSize;
     private const int HeaderSize = 40;
     private const int DefaultChunkSize = 1024 * 1024; // 1 MiB
     private const ulong MaxPacketLength = 64UL * 1024 * 1024; // 64 MiB safety cap
