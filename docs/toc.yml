@@ -2,6 +2,8 @@
   href: index.md
 - name: Managed 实施路线图
   href: managed-roadmap.md
+- name: Managed 并行开发与合并计划
+  href: managed-parallel-plan.md
 - name: pymobiledevice3 功能对照
   href: managed-parity.md
 - name: pymobiledevice3 API 与协议对照
