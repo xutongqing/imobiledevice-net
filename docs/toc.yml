@@ -10,5 +10,7 @@
   href: managed-windows-validation.md
 - name: P1 选机与连接诊断
   href: managed-device-discovery.md
+- name: P3 完整备份与恢复
+  href: managed-backup.md
 - name: API Documentation
   href: api/

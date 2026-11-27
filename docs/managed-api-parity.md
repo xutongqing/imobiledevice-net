@@ -23,7 +23,7 @@
 
 | 上游 API 及源码 | 功能 | 代表成员 | Managed | C# 入口或边界 | 阶段 |
 | --- | --- | --- | --- | --- | --- |
-| [`Mobilebackup2Service`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/mobilebackup2.py#L178) | 备份与恢复 | `get_will_encrypt`、`backup`、`restore`、`info` | 待实现 | — | P3 |
+| [`Mobilebackup2Service`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/mobilebackup2.py#L178) | 备份与恢复 | `get_will_encrypt`、`backup`、`restore`、`info` | 部分 | [MobileBackupClient](managed-backup.md) 提供备份、恢复、列举、提取和密码操作 | P3 |
 | [`DtFetchSymbols`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/dtfetchsymbols.py#L9) | 传统设备符号导出 | `list_files`、`get_file` | 待实现 | — | P4 |
 | [`RemoteFetchSymbolsService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/remote_fetch_symbols.py#L28) | 远程设备符号下载 | `get_dsc_file_list`、`download` | 待实现 | — | P4 |
 | [`DtSimulateLocation`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/simulate_location.py#L8) | 旧版位置模拟 | `clear`、`set` | 待实现 | — | P4 |
@@ -145,7 +145,7 @@
 | 上游 API 及源码 | 功能 | 代表成员 | Managed | C# 入口或边界 | 阶段 |
 | --- | --- | --- | --- | --- | --- |
 | [`MobileSyncService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/mobilesync.py#L28) | 同步记录读写与删除 | `get_all_records`、`push_changes` | 待实现 | — | P6 |
-| [`DeviceLink`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/device_link.py#L115) | DeviceLink 消息循环和主机端文件操作 | `dl_loop`、`version_exchange`、`send_process_message`、`download_files` | 待实现 | — | P3 |
+| [`DeviceLink`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/device_link.py#L115) | DeviceLink 消息循环和主机端文件操作 | `dl_loop`、`version_exchange`、`send_process_message`、`download_files` | 部分 | [DeviceLink](../iMobileDevice.Managed/Backup/DeviceLink.cs) 在备份 API 内部处理版本、文件传输和完成状态 | P3 |
 | [`DeveloperDiskImageMounter`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/mobile_image_mounter.py#L377) | 传统开发者镜像 | `mount`、`umount` | 待实现 | — | P4 |
 | [`PersonalizedImageMounter`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/mobile_image_mounter.py#L405) | 个性化镜像与签名 | `mount`、`umount`、`get_manifest_from_tss` | 待实现 | — | P4 |
 | [`WebDavServer`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/webdav.py#L309) | 通过 WebDAV 提供文件访问 | `url`、`stop` | 待实现 | — | P6 |

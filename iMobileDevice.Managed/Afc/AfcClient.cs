@@ -182,6 +182,15 @@ public sealed class AfcClient : IAsyncDisposable
         return BinaryPrimitives.ReadUInt64LittleEndian(reply.HeaderPayload.AsSpan(0, 8));
     }
 
+    internal async Task SetBackupLockAsync(ulong handle, bool acquire, CancellationToken cancellationToken)
+    {
+        byte[] payload = new byte[16];
+        BinaryPrimitives.WriteUInt64LittleEndian(payload, handle);
+        BinaryPrimitives.WriteUInt64LittleEndian(payload.AsSpan(8), acquire ? 6UL : 12UL);
+        var reply = await ExchangeAsync(AfcOperation.FileRefLock, payload, ReadOnlyMemory<byte>.Empty, cancellationToken).ConfigureAwait(false);
+        EnsureStatusOk(reply, "FileRefLock");
+    }
+
     public async Task CloseFileHandleAsync(ulong handle, CancellationToken cancellationToken = default)
     {
         byte[] headerPayload = new byte[8];

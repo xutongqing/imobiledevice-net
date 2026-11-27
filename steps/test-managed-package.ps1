@@ -37,12 +37,14 @@ try {
     @'
 using iMobileDevice.Managed.Plist;
 using iMobileDevice.Managed.Usbmuxd;
+using iMobileDevice.Managed.Backup;
 
 var client = new UsbmuxdClient();
 var data = PlistSerializer.Serialize(new PlistString("device"), PlistFormat.Binary);
 if (PlistSerializer.Parse(data) is not PlistString { Value: "device" })
     throw new System.Exception("Binary plist round trip failed.");
 System.Console.WriteLine(client.GetType().Assembly.FullName);
+System.Console.WriteLine($"{typeof(MobileBackupClient).FullName}: {MobileBackupClient.ServiceName}");
 '@ | Set-Content -LiteralPath (Join-Path $work.FullName 'Program.cs') -Encoding utf8
 
     dotnet restore $project --source $feed --packages (Join-Path $work.FullName 'cache') -p:NuGetAudit=false

@@ -10,6 +10,8 @@ foreach (var device in await usbmuxd.ListDevicesAsync())
     Console.WriteLine($"{device.SerialNumber} ({device.ConnectionType})");
 ```
 
+`MobileBackupClient` 支持全量、增量、加密备份和恢复，使用已有的配对 Lockdown 会话。示例见[完整备份与恢复](https://github.com/xutongqing/imobiledevice-net/blob/main/docs/managed-backup.md)。
+
 Windows 的普通 USB 连接依赖 iTunes 提供的 Apple Mobile Device Service，Linux 需要运行 usbmuxd，macOS 使用系统服务。需要配对的操作还需在设备上确认信任。
 
 连接指定设备使用 `LockdownClient.ConnectByUdidAsync(udid)`。需要诊断时，`DeviceConnectionDiagnostics.InspectAsync` 可按 UDID 和连接类型筛选，返回每条连接的配对状态、设备摘要和错误码。[选机与连接诊断](https://github.com/xutongqing/imobiledevice-net/blob/master/docs/managed-device-discovery.md)

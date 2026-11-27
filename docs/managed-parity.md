@@ -4,7 +4,7 @@
 
 | 已有 C# 对应操作 | 部分覆盖 | 待实现 | 合计 |
 | ---: | ---: | ---: | ---: |
-| 6 | 21 | 276 | 303 |
+| 11 | 24 | 268 | 303 |
 
 **已有**表示公开 C# API 可以完成该操作，返回结构、字节或流均可。**部分**列出可复用入口和缺少的语义或版本路径。**待实现**表示尚缺该服务或工作流。状态按源码核对；真机验证独立记录。原生绑定、原生工具、只打开通用服务流均不自动计入业务功能覆盖。
 
@@ -60,15 +60,15 @@
 
 | 上游操作及源码 | 用户操作 | Managed | C# 入口或已知边界 | 阶段 |
 | --- | --- | --- | --- | --- |
-| [`backup2 backup`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L99) | 全量或增量备份及选择规则 | 待实现 | — | P3 |
-| [`backup2 restore`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L174) | 从本机备份恢复 | 待实现 | — | P3 |
-| [`backup2 info`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L233) | 读取备份信息 | 待实现 | — | P3 |
-| [`backup2 list`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L248) | 列举备份内容 | 待实现 | — | P3 |
-| [`backup2 unback`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L263) | 展开备份目录树 | 待实现 | — | P3 |
-| [`backup2 extract`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L278) | 提取备份文件 | 待实现 | — | P3 |
-| [`backup2 encryption`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L306) | 切换备份加密 | 待实现 | — | P3 |
+| [`backup2 backup`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L99) | 全量或增量备份及选择规则 | 部分 | [全量、增量和设备加密备份，选择规则与清单裁剪待实现](managed-backup.md) | P3 |
+| [`backup2 restore`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L174) | 从本机备份恢复 | 部分 | [RestoreAsync 支持来源、密码、重启、设置和移除选项，始终保留本机源快照](managed-backup.md) | P3 |
+| [`backup2 info`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L233) | 读取备份信息 | 已有 | [GetInfoAsync 或离线 ReadInfo](managed-backup.md) | P3 |
+| [`backup2 list`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L248) | 列举备份内容 | 部分 | [ListAsync 返回 CSV，支持明文和有密码的加密 Manifest.db，旧加密 MBDB 待验证](managed-backup.md) | P3 |
+| [`backup2 unback`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L263) | 展开备份目录树 | 已有 | [UnpackAsync 返回新展开目录](managed-backup.md) | P3 |
+| [`backup2 extract`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L278) | 提取备份文件 | 已有 | [ExtractAsync 按域与路径提取，ExtractFileAsync 可离线读取明文备份](managed-backup.md) | P3 |
+| [`backup2 encryption`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L306) | 切换备份加密 | 已有 | [GetWillEncryptAsync 与 ChangePasswordAsync](managed-backup.md) | P3 |
 | [`backup2 cloud`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L345) | 切换 iCloud 备份 | 待实现 | — | P3 |
-| [`backup2 change-password`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L358) | 更改备份密码 | 待实现 | — | P3 |
+| [`backup2 change-password`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L358) | 更改备份密码 | 已有 | [ChangePasswordAsync](managed-backup.md) | P3 |
 | [`backup2 erase-device`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/backup.py#L376) | 通过备份服务抹除设备 | 待实现 | — | P3 |
 
 ## btlogger · 蓝牙日志

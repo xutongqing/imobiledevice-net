@@ -9,7 +9,7 @@
     <AssemblyName>iMobileDevice.Managed</AssemblyName>
     <PackageId>iMobileDevice.Managed</PackageId>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <Description>Managed C# clients for usbmuxd, Lockdown, AFC, CoreDeviceProxy, RemoteXPC, RSD and DVT screenshots on .NET 8.</Description>
+    <Description>Managed C# clients for usbmuxd, Lockdown, AFC, MobileBackup2 backup and restore, CoreDeviceProxy, RemoteXPC, RSD and DVT screenshots on .NET 8.</Description>
     <Authors>iMobileDevice.Managed contributors</Authors>
     <RepositoryUrl>https://github.com/xutongqing/imobiledevice-net</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

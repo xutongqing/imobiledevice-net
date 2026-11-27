@@ -2,10 +2,10 @@ name: Build Native Libraries & NuGet Package
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
     tags: [ 'v*' ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
   workflow_dispatch:
 
 jobs:
