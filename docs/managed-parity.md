@@ -8,7 +8,7 @@
 
 **已有**表示公开 C# API 可以完成该操作，返回结构、字节或流均可。**部分**列出可复用入口和缺少的语义或版本路径。**待实现**表示尚缺该服务或工作流。状态按源码核对；真机验证独立记录。原生绑定、原生工具、只打开通用服务流均不自动计入业务功能覆盖。
 
-**验证与条件**　USB 项目使用平台设备服务，配对时需信任；网络发现、开发者隧道、DDI、恢复模式的宿主条件见[平台矩阵](managed-roadmap.md)。开发者服务还受设备系统实际公布的服务影响。设备监督、WDA Runner、开发签名应用等要求见具体操作的上游链接。已有的 [USB / Lockdown / AFC 真机用例](../iMobileDevice.Managed.Tests/ManagedDeviceE2ETests.cs) 及 [RSD / DVT 用例](../iMobileDevice.Managed.Tests/RsdAndDvtE2ETests.cs) 与本轮无设备的包消费验证分开统计；本表的设备项均待补平台、机型、系统和包版本的验收记录。
+**验证与条件**　USB 项目使用平台设备服务，配对时需信任。网络发现、开发者隧道、DDI 和恢复模式的宿主条件见[平台矩阵](managed-roadmap.md)。设备监督、WDA Runner 和开发签名应用等要求见各操作的上游链接。[Windows 真机验收记录](managed-windows-validation.md)列出了 CI 制品在 iOS 15.1 和 27.3 上实测的枚举、配对、AFC 与截屏结果，并注明旧系统截屏的限制。其他平台与版本的覆盖需分别验证。
 
 **基线复核**　从 [`CLI_GROUPS`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/__main__.py) 进入各模块，沿 `add_typer` 递归取已注册叶子，并按 Typer 的单命令折叠规则还原命令路径。升级时用完整路径比较增删和改名，逐行复核参数、产物和阶段。表中阶段是补齐或回归该操作的目标。
 

@@ -6,5 +6,7 @@
   href: managed-parity.md
 - name: pymobiledevice3 API 与协议对照
   href: managed-api-parity.md
+- name: P0 Windows 真机验收
+  href: managed-windows-validation.md
 - name: API Documentation
   href: api/

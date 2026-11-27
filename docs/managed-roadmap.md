@@ -34,7 +34,8 @@ P2、P3 的普通 USB 路径可以在 P1 旧系统隧道兼容期间交付。开
 
 - [x] 固定上游提交，登记末级命令和公共服务。见[功能对照表](managed-parity.md)。
 - [x] 增加独立的 `pack-managed` 作业。制品名为 `imobiledevice-managed-nupkg`，以隔离包源和空缓存验证普通业务项目能还原并运行。见[工作流](../.github/workflows/build-native-and-pack.yml)。
-- [ ] 完成首轮 Windows、Linux、macOS 真机包消费报告，记录系统、机型、iOS、连接方式、包版本和结果。把真机测试未启用的情况在报告中显式标为跳过。
+- [x] Windows 下载 Actions 制品进行真机验收。iOS 15.1 与 27.3 已验证枚举、已有配对会话和 AFC；27.3 另验证新身份配对及 DVT 截屏。见 [Windows 真机验收记录](managed-windows-validation.md)。
+- [ ] 补齐 Linux、macOS 真机包消费报告，记录系统、机型、iOS、连接方式、包版本和结果。把真机测试未启用的情况在报告中显式标为跳过。
 - [ ] 为环境诊断记录所需探测项，形成 P1 的首个实现任务；验证恢复模式 USB 后端的宿主条件。
 
 ## 维护与验收口径
