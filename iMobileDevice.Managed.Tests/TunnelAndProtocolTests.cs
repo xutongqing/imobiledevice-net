@@ -67,8 +67,10 @@ public class TunnelAndProtocolTests
         Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, restored["bytes"]);
     }
 
-    [Fact]
-    public async Task DtxConnectionReassemblesMultiFragmentResponseWithDescriptorFragment0()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DtxConnectionReassemblesMultiFragmentResponseWithDescriptorFragment0(bool flushPendingAtEof)
     {
         byte[] fakePng = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x01, 0x02, 0x03, 0x04 };
         byte[] archivedObj = NsKeyedArchiver.Archive(fakePng);
@@ -91,10 +93,11 @@ public class TunnelAndProtocolTests
         WriteDtxHeader(wire, fragId: 2, fragCount: 3, length: (uint)(fullPayload.Length - split), id: 1, convIdx: 1, chan: 1);
         wire.Write(fullPayload, split, fullPayload.Length - split);
 
-        using var duplex = new PairedMemoryStream(wire.ToArray());
+        using var duplex = new PairedMemoryStream(wire.ToArray(), flushPendingAtEof);
         await using var dtx = new DtxConnection(duplex);
 
-        DtxMessage reply = await dtx.InvokeAsync(channelCode: 1, selector: "takeScreenshot", expectsReply: true);
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        DtxMessage reply = await dtx.InvokeAsync(channelCode: 1, selector: "takeScreenshot", expectsReply: true, cancellationToken: deadline.Token);
         Assert.Equal(fakePng, Assert.IsType<byte[]>(reply.Payload));
     }
 
@@ -203,8 +206,11 @@ public class TunnelAndProtocolTests
 
         public long BytesWritten => writer.Length;
 
-        public PairedMemoryStream(byte[] scriptedReply)
+        private readonly bool flushPendingAtEof;
+
+        public PairedMemoryStream(byte[] scriptedReply, bool flushPendingAtEof = false)
         {
+            this.flushPendingAtEof = flushPendingAtEof;
             reader = new MemoryStream(scriptedReply, writable: false);
         }
 
@@ -214,7 +220,9 @@ public class TunnelAndProtocolTests
         public override long Length => reader.Length;
         public override long Position { get => reader.Position; set => throw new NotSupportedException(); }
         public override void Flush() { }
-        public override Task FlushAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public override Task FlushAsync(CancellationToken cancellationToken) => flushPendingAtEof
+            ? Task.Delay(Timeout.Infinite, cancellationToken)
+            : Task.CompletedTask;
         public override int Read(byte[] buffer, int offset, int count) => ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)

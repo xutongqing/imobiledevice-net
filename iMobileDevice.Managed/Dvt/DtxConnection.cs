@@ -78,6 +78,7 @@ public sealed class DtxConnection : IAsyncDisposable
             pendingReplies[id] = tcs;
         }
 
+        DtxMessage reply;
         try
         {
             byte[] auxBytes = args != null && args.Count > 0 ? SerializeAuxiliary(args) : Array.Empty<byte>();
@@ -100,18 +101,14 @@ public sealed class DtxConnection : IAsyncDisposable
                 return new DtxMessage(channelCode, id, 0, 0, false, null, Array.Empty<object?>());
             }
 
-            DtxMessage reply = await tcs!.Task.WaitAsync(token).ConfigureAwait(false);
-            if ((reply.Flags & 0xFF) == FlagError)
-            {
-                throw new InvalidOperationException($"DTX invocation '{selector}' on channel {channelCode} returned error: {reply.Payload}");
-            }
-
-            return reply;
+            reply = await tcs!.Task.WaitAsync(token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && readFailure != null)
         {
-            readFailure.Throw();
-            throw;
+            // The peer can send a complete reply followed by FIN before our flush or wait resumes.
+            if (tcs?.Task.IsCompletedSuccessfully != true)
+                readFailure.Throw();
+            reply = await tcs.Task.ConfigureAwait(false);
         }
         finally
         {
@@ -120,6 +117,12 @@ public sealed class DtxConnection : IAsyncDisposable
                 pendingReplies.TryRemove(id, out _);
             }
         }
+
+        if ((reply.Flags & 0xFF) == FlagError)
+        {
+            throw new InvalidOperationException($"DTX invocation '{selector}' on channel {channelCode} returned error: {reply.Payload}");
+        }
+        return reply;
     }
 
     private static byte[] BuildSingleFragmentPacket(
