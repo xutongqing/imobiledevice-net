@@ -115,10 +115,8 @@ internal sealed class BonjourDiscoveryAccumulator
         return questions;
     }
 
-    public IReadOnlyList<BonjourServiceRecord> BuildResults()
+    private IEnumerable<(DnsWireName Instance, SrvEntry Srv, BonjourServiceRecord Record)> GetLinkRecords()
     {
-        var results = new List<BonjourServiceRecord>();
-
         foreach (string serviceType in queriedServices.Values)
         {
             if (!ptrInstancesByService.TryGetValue(serviceType, out HashSet<DnsWireName>? instances))
@@ -165,7 +163,7 @@ internal sealed class BonjourDiscoveryAccumulator
                         }
                     }
 
-                    results.Add(new BonjourServiceRecord(
+                    yield return (instanceKey, srv, new BonjourServiceRecord(
                         serviceType,
                         instance,
                         hostName,
@@ -176,7 +174,36 @@ internal sealed class BonjourDiscoveryAccumulator
                 }
             }
         }
+    }
 
+    public static IReadOnlyList<BonjourServiceRecord> BuildResults(IEnumerable<BonjourDiscoveryAccumulator> links)
+    {
+        var results = new List<BonjourServiceRecord>();
+        var services = links.SelectMany(link => link.GetLinkRecords())
+            .GroupBy(entry => (entry.Record.ServiceType, entry.Instance, entry.Srv));
+        foreach (var service in services)
+        {
+            // Different links can use identical instance/host/port names for distinct devices.
+            // Merge only records advertising the same TXT payload, after resolving each link.
+            var variants = new List<BonjourServiceRecord>();
+            foreach (var entry in service)
+            {
+                var record = entry.Record;
+                int match = variants.FindIndex(v => v.TxtRecords.Count == record.TxtRecords.Count &&
+                    record.TxtRecords.All(kv => v.TxtRecords.TryGetValue(kv.Key, out var value) && value == kv.Value));
+                if (match < 0)
+                {
+                    variants.Add(record);
+                    continue;
+                }
+                var prior = variants[match];
+                variants[match] = prior with
+                {
+                    Endpoints = prior.Endpoints.Concat(record.Endpoints).DistinctBy(ep => ep.ToIPEndPoint()).ToArray(),
+                };
+            }
+            results.AddRange(variants);
+        }
         results.Sort(static (left, right) =>
         {
             int cmp = StringComparer.OrdinalIgnoreCase.Compare(left.ServiceType, right.ServiceType);
@@ -203,6 +230,12 @@ internal sealed class BonjourDiscoveryAccumulator
                     if (queriedServices.TryGetValue(rrName, out string? canonicalService))
                     {
                         DnsWireName instanceName = rr.TargetName;
+                        if (rr.Ttl == 0)
+                        {
+                            if (ptrInstancesByService.TryGetValue(canonicalService, out var present))
+                                present.Remove(instanceName);
+                            break;
+                        }
                         canonicalInstanceNames.TryAdd(instanceName, instanceName);
 
                         if (!ptrInstancesByService.TryGetValue(canonicalService, out HashSet<DnsWireName>? set))

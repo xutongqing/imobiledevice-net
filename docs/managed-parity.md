@@ -4,7 +4,7 @@
 
 | 已有 C# 对应操作 | 部分覆盖 | 待实现 | 合计 |
 | ---: | ---: | ---: | ---: |
-| 19 | 22 | 262 | 303 |
+| 19 | 25 | 259 | 303 |
 
 **已有**表示公开 C# API 可以完成该操作，返回结构、字节或流均可。**部分**列出可复用入口和缺少的语义或版本路径。**待实现**表示尚缺该服务或工作流。状态按源码核对；真机验证独立记录。原生绑定、原生工具、只打开通用服务流均不自动计入业务功能覆盖。
 
@@ -81,9 +81,9 @@
 
 | 上游操作及源码 | 用户操作 | Managed | C# 入口或已知边界 | 阶段 |
 | --- | --- | --- | --- | --- |
-| [`bonjour mobdev2`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L21) | 发现 Wi-Fi Lockdown 设备 | 待实现 | — | P1 |
-| [`bonjour remotepairing`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L45) | 发现远程配对服务 | 待实现 | — | P1 |
-| [`bonjour remotepairing-manual-pairing`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L58) | 发现手工配对广播 | 待实现 | — | P1 |
+| [`bonjour mobdev2`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L21) | 发现 Wi-Fi Lockdown 设备 | 部分 | `BrowseMobdev2Async` 发现广播端点，配对会话及设备摘要待补。[验收](managed-bonjour.md) | P1 |
+| [`bonjour remotepairing`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L45) | 发现远程配对服务 | 部分 | `BrowseRemotePairingAsync` 返回地址和端口，多地址筛选与上游有差异。[验收](managed-bonjour.md) | P1 |
+| [`bonjour remotepairing-manual-pairing`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L58) | 发现手工配对广播 | 部分 | `BrowseRemotePairingManualPairingAsync` 返回地址、端口和 TXT 名称，多地址筛选与上游有差异。[验收](managed-bonjour.md) | P1 |
 | [`bonjour rsd`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/bonjour.py#L79) | 发现 RSD 服务 | 待实现 | — | P1 |
 
 ## companion · 伴随设备

@@ -78,7 +78,8 @@ public sealed class BonjourClient
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var accumulator = new BonjourDiscoveryAccumulator(normalizedTypes);
+        // mDNS names are link-local. Join PTR/SRV/TXT/address records only on the receiving interface.
+        var links = new Dictionary<int, BonjourDiscoveryAccumulator>();
         var ptrQuestions = normalizedTypes
             .Select(static serviceType => new DnsQuestion(DnsWireName.Parse(serviceType), DnsRecordType.PTR))
             .ToArray();
@@ -100,6 +101,10 @@ public sealed class BonjourClient
                     break;
                 }
 
+                if (!links.TryGetValue(packet.Value.InterfaceIndex, out var accumulator))
+                {
+                    links[packet.Value.InterfaceIndex] = accumulator = new BonjourDiscoveryAccumulator(normalizedTypes);
+                }
                 if (!accumulator.AddPacket(packet.Value))
                 {
                     continue;
@@ -138,7 +143,7 @@ public sealed class BonjourClient
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        return accumulator.BuildResults();
+        return BonjourDiscoveryAccumulator.BuildResults(links.Values);
     }
 
     /// <summary>

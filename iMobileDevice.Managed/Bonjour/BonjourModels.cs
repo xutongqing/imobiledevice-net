@@ -14,31 +14,16 @@ public sealed record BonjourEndpoint(
     /// <summary>
     /// Formats the endpoint IP address, including the IPv6 link-local scope identifier (<c>fe80::...%scope</c>) when present.
     /// </summary>
-    public string FormattedAddress
-    {
-        get
-        {
-            if (Address.IsIPv6LinkLocal)
-            {
-                if (Address.ScopeId > 0)
-                {
-                    return Address.ToString();
-                }
+    public string FormattedAddress => ScopedAddress.ToString();
 
-                if (InterfaceIndex is > 0)
-                {
-                    return new IPAddress(Address.GetAddressBytes(), InterfaceIndex.Value).ToString();
-                }
-            }
-
-            return Address.ToString();
-        }
-    }
+    private IPAddress ScopedAddress => Address.IsIPv6LinkLocal && Address.ScopeId == 0 && InterfaceIndex is > 0
+        ? new IPAddress(Address.GetAddressBytes(), InterfaceIndex.Value)
+        : Address;
 
     /// <summary>
     /// Converts this endpoint into an <see cref="IPEndPoint"/> preserving <see cref="IPAddress.ScopeId"/>.
     /// </summary>
-    public IPEndPoint ToIPEndPoint() => new(Address, Port);
+    public IPEndPoint ToIPEndPoint() => new(ScopedAddress, Port);
 }
 
 /// <summary>

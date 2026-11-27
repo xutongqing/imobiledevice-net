@@ -325,6 +325,53 @@ public class BonjourDiscoveryTests
         Assert.Equal(15L, v6Endpoints[1].ToIPEndPoint().Address.ScopeId);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SameHostAndInstanceOnDifferentLinksKeepTheirOwnEndpointsAndTxt(bool samePort)
+    {
+        const string type = BonjourServiceTypes.RemotePairingManualPairing;
+        const string instance = "phone." + type;
+        const string host = "phone.local.";
+        var transport = new FakeMdnsTransport();
+        foreach (int link in new[] { 12, 15 })
+        {
+            transport.EnqueueResponse(BuildResponsePacket(answers: [
+                PtrRecord(type, instance), SrvRecord(instance, host, (ushort)(samePort ? 5000 : 5000 + link)),
+                TxtRecord(instance, ("name", $"phone-{link}")), ARecord(host, IPAddress.Parse($"192.0.2.{link}"))]), link);
+        }
+
+        var rows = await new BonjourClient(() => transport).BrowseRemotePairingManualPairingAsync(TimeSpan.FromMilliseconds(90));
+        Assert.Equal(2, rows.Count);
+        foreach (int link in new[] { 12, 15 })
+        {
+            var row = Assert.Single(rows, r => r.Name == $"phone-{link}");
+            Assert.Equal(samePort ? 5000 : 5000 + link, (int)row.Port);
+            Assert.Equal(IPAddress.Parse($"192.0.2.{link}"), Assert.Single(row.Endpoints).Address);
+        }
+    }
+
+    [Fact]
+    public void PublicEndpointUsesInterfaceIndexWhenLinkLocalAddressHasNoScope()
+    {
+        var endpoint = new BonjourEndpoint(IPAddress.Parse("fe80::10"), 1234, InterfaceIndex: 15);
+        Assert.Equal(endpoint.FormattedAddress, endpoint.ToIPEndPoint().Address.ToString());
+    }
+
+    [Fact]
+    public async Task WithdrawnPtrIsNotReturnedAtEndOfBrowse()
+    {
+        const string type = BonjourServiceTypes.RemotePairing;
+        const string instance = "leaving." + type;
+        var transport = new FakeMdnsTransport();
+        transport.EnqueueResponse(BuildResponsePacket(answers: [PtrRecord(type, instance),
+            SrvRecord(instance, "phone.local.", 5000), ARecord("phone.local.", IPAddress.Parse("192.0.2.10"))]));
+        transport.EnqueueResponse(BuildResponsePacket(answers: [BuildRr(DnsWireName.Parse(type), DnsRecordType.PTR,
+            1, 0, DnsWireCodec.EncodeName(DnsWireName.Parse(instance)))]));
+
+        Assert.Empty(await new BonjourClient(() => transport).BrowseRemotePairingAsync(TimeSpan.FromMilliseconds(90)));
+    }
+
     [Fact]
     public async Task IgnoresIncomingQueriesAndUnrelatedServices()
     {

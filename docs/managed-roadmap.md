@@ -46,6 +46,6 @@ P2 的应用查询、House Arrest 和 AFC 递归传输已完成 Windows USB 真�
 
 P3 在 `main` 提供 MobileBackup2 全量、增量、加密备份和恢复，主机端用独立工作目录处理每次操作。接口、存储要求、Windows 验收及待验证项见[完整备份与恢复](managed-backup.md)。
 
-P1 已接入按 UDID 选机、USB/网络连接筛选、多设备摘要以及 usbmuxd 与 Lockdown 连接诊断，并完成 Windows 单机实测。Bonjour 主动发现、自动重连和更多隧道路径仍在 P1 后续范围。[接口与真机验收记录](managed-device-discovery.md)
+P1 已接入按 UDID 选机、USB/网络连接筛选、多设备摘要以及 usbmuxd 与 Lockdown 连接诊断，并完成 Windows 单机实测。Bonjour 已支持两类 RemotePairing 和 mobdev2 广播端点，后续补 Wi-Fi 会话、重连与更多隧道路径。[Bonjour 同网对照](managed-bonjour.md) · [接口与真机验收记录](managed-device-discovery.md)
 
 每项对应一个用户操作。比较同一输入下的设备字段、输出文件、事件、失败类别、取消与断连行为。成功启动服务和得到通用字节流只计底层能力。真机覆盖按主机和 iOS 分开记录，至少包含 iOS 17 前、17.0–17.3 和 17.4+，实时投屏另取满足其版本要求的设备。更新上游基线时，先列出新增、改名、删除的操作，再更新 C# 映射与验证记录。

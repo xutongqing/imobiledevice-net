@@ -83,15 +83,14 @@ internal sealed class UdpMdnsTransport : IMdnsTransport
             SingleWriter = false,
         });
 
+        activeReaders = (ipv4Socket is null ? 0 : 1) + (ipv6Socket is null ? 0 : 1);
         if (ipv4Socket is not null)
         {
-            activeReaders++;
             receiveLoops.Add(RunReceiveLoopAsync(ipv4Socket, isIPv6: false));
         }
 
         if (ipv6Socket is not null)
         {
-            activeReaders++;
             receiveLoops.Add(RunReceiveLoopAsync(ipv6Socket, isIPv6: true));
         }
     }
