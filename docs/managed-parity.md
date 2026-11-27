@@ -4,7 +4,7 @@
 
 | 已有 C# 对应操作 | 部分覆盖 | 待实现 | 合计 |
 | ---: | ---: | ---: | ---: |
-| 11 | 24 | 268 | 303 |
+| 19 | 22 | 262 | 303 |
 
 **已有**表示公开 C# API 可以完成该操作，返回结构、字节或流均可。**部分**列出可复用入口和缺少的语义或版本路径。**待实现**表示尚缺该服务或工作流。状态按源码核对；真机验证独立记录。原生绑定、原生工具、只打开通用服务流均不自动计入业务功能覆盖。
 
@@ -27,9 +27,9 @@
 | --- | --- | --- | --- | --- |
 | [`afc shell`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L29) | 交互式文件 Shell | 部分 | [`AfcClient`](../iMobileDevice.Managed/Afc/AfcClient.cs) 提供文件操作，缺交互会话 | P2 |
 | [`afc webdav`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L37) | 通过 WebDAV 挂载媒体目录 | 待实现 | — | P6 |
-| [`afc pull`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L55) | 下载文件或目录树 | 部分 | [`ReadFileChunkAsync`](../iMobileDevice.Managed/Afc/AfcClient.cs) 支持分块读取，缺本地落盘和递归下载 | P2 |
-| [`afc push`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L75) | 上传文件或目录树 | 部分 | [`WriteFileChunkAsync`](../iMobileDevice.Managed/Afc/AfcClient.cs) 支持分块写入，缺本地目录递归上传 | P2 |
-| [`afc ls`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L92) | 列目录和递归遍历 | 部分 | [`ReadDirectoryAsync`](../iMobileDevice.Managed/Afc/AfcClient.cs) 支持单层目录，缺递归枚举 | P2 |
+| [`afc pull`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L55) | 下载文件或目录树 | 已有 | `AfcClient.PullAsync` 支持递归、分块、进度和逐文件容错。[用法与验收](managed-apps-afc.md) | P2 |
+| [`afc push`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L75) | 上传文件或目录树 | 已有 | `AfcClient.PushAsync` 上传文件或目录树，支持进度和取消。[用法与验收](managed-apps-afc.md) | P2 |
+| [`afc ls`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L92) | 列目录和递归遍历 | 已有 | `EnumerateDirectoryAsync` 支持递归和 IncludeRoot。[用法与验收](managed-apps-afc.md) | P2 |
 | [`afc rm`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/afc.py#L108) | 删除文件或目录树 | 已有 | [`RemovePathAsync / RemovePathAndContentsAsync`](../iMobileDevice.Managed/Afc/AfcClient.cs) | P2 |
 
 ## amfi · 开发者模式
@@ -45,15 +45,15 @@
 
 | 上游操作及源码 | 用户操作 | Managed | C# 入口或已知边界 | 阶段 |
 | --- | --- | --- | --- | --- |
-| [`apps list`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L41) | 列已安装应用 | 待实现 | — | P2 |
-| [`apps query`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L72) | 按 Bundle ID 查询应用信息 | 待实现 | — | P2 |
+| [`apps list`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L41) | 列已安装应用 | 已有 | `InstallationProxyClient.ListAsync` 支持类型、占位应用与大小选项。[用法与验收](managed-apps-afc.md) | P2 |
+| [`apps query`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L72) | 按 Bundle ID 查询应用信息 | 已有 | `QueryAsync` 支持按多个 Bundle ID 查询及大小选项。[用法与验收](managed-apps-afc.md) | P2 |
 | [`apps uninstall`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L90) | 卸载应用 | 待实现 | — | P2 |
 | [`apps install`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L97) | 安装应用 | 待实现 | — | P2 |
-| [`apps afc`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L128) | 打开应用文件容器 Shell | 待实现 | — | P2 |
+| [`apps afc`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L128) | 打开应用文件容器 Shell | 部分 | `AppContainer.OpenAsync` 打开共享 Documents 或获准的整个容器；交互 Shell 待实现。[用法与验收](managed-apps-afc.md) | P2 |
 | [`apps webdav`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L146) | 通过 WebDAV 挂载应用文件 | 待实现 | — | P6 |
-| [`apps pull`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L168) | 下载应用文件 | 待实现 | — | P2 |
-| [`apps push`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L184) | 上传应用文件 | 待实现 | — | P2 |
-| [`apps rm`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L200) | 删除应用文件 | 待实现 | — | P2 |
+| [`apps pull`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L168) | 下载应用文件 | 已有 | `AppContainer.OpenAsync` 后调用 `PullAsync`。[用法与验收](managed-apps-afc.md) | P2 |
+| [`apps push`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L184) | 上传应用文件 | 已有 | `AppContainer.OpenAsync` 后调用 `PushAsync`。[用法与验收](managed-apps-afc.md) | P2 |
+| [`apps rm`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L200) | 删除应用文件 | 已有 | `AppContainer.OpenAsync` 后调用 `RemovePathAndContentsAsync`。[用法与验收](managed-apps-afc.md) | P2 |
 | [`apps install-record`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/apps.py#L215) | 查询应用安装记录 | 待实现 | — | P2 |
 
 ## backup2 · 备份与恢复备份

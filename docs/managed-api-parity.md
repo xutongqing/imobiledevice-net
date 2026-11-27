@@ -10,7 +10,7 @@
 
 | 上游 API 及源码 | 功能 | 代表成员 | Managed | C# 入口或边界 | 阶段 |
 | --- | --- | --- | --- | --- | --- |
-| [`HouseArrestService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/house_arrest.py#L16) | 应用文件容器 | `create`、`send_command`、`shell` | 待实现 | — | P2 |
+| [`HouseArrestService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/house_arrest.py#L16) | 应用文件容器 | `create`、`send_command`、`shell` | 部分 | `AppContainer.OpenAsync` 通过 Lockdown 获取 AFC 会话；交互 Shell 和 RSD 待实现。[用法与验收](managed-apps-afc.md) | P2 |
 | [`MobileConfigService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/mobile_config.py#L41) | 配置描述文件 | `hello`、`flush`、`escalate`、`get_stored_profile` | 待实现 | — | P2 |
 | [`MisagentService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/misagent.py#L22) | 签名描述文件 | `install`、`remove`、`copy_all` | 待实现 | — | P2 |
 | [`FileRelayService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/file_relay.py#L27) | 请求文件归档 | `stop_session`、`request_sources` | 待实现 | — | P6 |
@@ -93,9 +93,9 @@
 | --- | --- | --- | --- | --- | --- |
 | [`LockdownService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/lockdown_service.py#L36) | 服务启动与连接生命周期 | `service` | 部分 | [`ConnectToServiceAsync`](../iMobileDevice.Managed/Lockdown/LockdownClient.cs)，可启动服务并返回流 | P1 |
 | [`OsTraceService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/os_trace.py#L206) | 系统日志、归档和进程清单 | `get_pid_list`、`create_archive`、`collect`、`syslog` | 待实现 | — | P2 |
-| [`InstallationProxyService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/installation_proxy.py#L67) | 安装卸载与查询应用 | `send_cmd_for_bundle_identifier`、`upgrade`、`restore`、`uninstall` | 待实现 | — | P2 |
+| [`InstallationProxyService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/installation_proxy.py#L67) | 安装卸载与查询应用 | `send_cmd_for_bundle_identifier`、`upgrade`、`restore`、`uninstall` | 部分 | `InstallationProxyClient` 可列举与查询；安装、升级和卸载待实现。[用法与验收](managed-apps-afc.md) | P2 |
 | [`StreamingZipConduitService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/streaming_zip_conduit.py#L163) | 传输应用安装包 | `install` | 待实现 | — | P2 |
-| [`AfcService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/afc.py#L321) | 文件目录读写与传输 | `wait_terminated`、`pull`、`exists`、`wait_exists` | 部分 | [`AfcClient`](../iMobileDevice.Managed/Afc/AfcClient.cs)，已有目录、分块读写、Seek/Tell、删除，缺递归传输等 | P2 |
+| [`AfcService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/afc.py#L321) | 文件目录读写与传输 | `wait_terminated`、`pull`、`exists`、`wait_exists` | 部分 | `AfcClient` 已支持目录递归、传输、存在性查询和删除；文件出现和 AFC 连接终止的等待接口待实现。[用法与验收](managed-apps-afc.md) | P2 |
 | [`DiagnosticsService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/diagnostics.py#L1011) | 设备诊断与电源操作 | `mobilegestalt`、`action`、`restart`、`shutdown` | 待实现 | — | P2 |
 | [`BatteryInfo`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/diagnostics.py#L949) | 电池信息模型 | `from_ioregistry` | 待实现 | — | P2 |
 | [`SpringBoardServicesService`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/services/springboard.py#L18) | 主屏与图标 | `get_icon_state`、`set_icon_state`、`get_icon_pngdata`、`get_interface_orientation` | 待实现 | — | P2 |

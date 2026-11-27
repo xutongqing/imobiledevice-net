@@ -245,13 +245,14 @@ public class AppsProtocolTests
         AfcClient afc = await AppContainer.OpenAsync(wire, BundleA, AppContainerScope.Documents);
         Assert.False(wire.Closed);
 
-        IReadOnlyList<string> documents = await afc.ReadDirectoryAsync("/");
+        IReadOnlyList<string> documents = await afc.ReadDirectoryAsync("/Documents");
         Assert.Equal(new[] { "Reports", "Notes" }, documents);
 
         (PlistDictionary vend, int consumed) = ParseFirstFrame(wire.BytesWritten);
         Assert.Equal("VendDocuments", vend.GetString("Command"));
         Assert.Equal(BundleA, vend.GetString("Identifier"));
         Assert.True(wire.BytesWritten.AsSpan(consumed, 8).SequenceEqual("CFA6LPAA"u8));
+        Assert.True(wire.BytesWritten.AsSpan(consumed + 40).SequenceEqual("/Documents\0"u8));
 
         await afc.DisposeAsync();
         Assert.True(wire.Closed);

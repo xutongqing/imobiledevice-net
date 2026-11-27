@@ -17,13 +17,13 @@ public static class AppContainer
 
     /// <summary>
     /// Starts a House Arrest service on an existing Lockdown session, vends the requested directory
-    /// and returns an AFC client rooted at the vended directory.
+    /// and returns an AFC client using the paths exposed by the device.
     /// </summary>
     /// <param name="lockdown">Paired Lockdown session used to start the service.</param>
     /// <param name="bundleIdentifier">Bundle identifier of the application to open.</param>
     /// <param name="scope">Vend only <c>Documents</c> or the whole container.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>An AFC session rooted at the vended directory; disposing it releases the service stream.</returns>
+    /// <returns>An AFC session that owns the service stream. For Documents scope, use <c>/Documents</c>.</returns>
     public static async Task<AfcClient> OpenAsync(
         LockdownClient lockdown,
         string bundleIdentifier,
@@ -44,7 +44,7 @@ public static class AppContainer
     /// <param name="bundleIdentifier">Bundle identifier of the application to open.</param>
     /// <param name="scope">Vend only <c>Documents</c> or the whole container.</param>
     /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>An AFC session rooted at the vended directory; disposing it releases the service stream.</returns>
+    /// <returns>An AFC session that owns the service stream. For Documents scope, use <c>/Documents</c>.</returns>
     /// <remarks>
     /// The stream is disposed whenever the call fails, including a refused vend, a cancelled request and
     /// an invalid bundle identifier, so a failed call never leaks the service connection. A successful

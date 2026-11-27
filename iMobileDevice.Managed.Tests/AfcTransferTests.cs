@@ -282,6 +282,25 @@ public sealed class AfcTransferTests : IDisposable
         Assert.Empty(Directory.GetFiles(batchOut, "*.afctmp", SearchOption.AllDirectories));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task FailedFileCompletionPreservesDestinationAndRemovesStaging(bool shortRead)
+    {
+        await using var server = new SimulatedAfcServer();
+        server.AddFile("/report", "new"u8.ToArray());
+        if (shortRead) server.ReportedFileSize = 8;
+        else server.CloseError = AfcErrorCode.ReadError;
+        await using var client = server.CreateClient();
+        string destination = Path.Combine(tempRoot, "report");
+        await File.WriteAllTextAsync(destination, "original");
+
+        await Assert.ThrowsAsync<AfcTransferException>(() => client.PullAsync("/report", destination));
+
+        Assert.Equal("original", await File.ReadAllTextAsync(destination));
+        Assert.Equal(new[] { destination }, Directory.GetFiles(tempRoot));
+    }
+
     [Fact]
     public async Task Pull_WithIgnoreErrors_ContinuesAfterPerFileAndSubdirectoryErrors()
     {
@@ -567,6 +586,8 @@ public sealed class AfcTransferTests : IDisposable
         private readonly Dictionary<ulong, OpenHandle> handles = [];
         private ulong nextHandle = 1;
 
+        public int? ReportedFileSize { get; set; }
+        public AfcErrorCode CloseError { get; set; } = AfcErrorCode.Success;
         public int ReadChunkCount { get; private set; }
         public int WriteChunkCount { get; private set; }
         public List<string> ReadDirectoriesCalled { get; } = [];
@@ -712,7 +733,7 @@ public sealed class AfcTransferTests : IDisposable
                     long mtimeNs = node.ModifyTime.ToUnixTimeMilliseconds() * 1_000_000L;
                     var kv = new List<string>
                     {
-                        "st_size", node.Kind == NodeKind.File ? node.Data.Length.ToString(CultureInfo.InvariantCulture) : "64",
+                        "st_size", node.Kind == NodeKind.File ? (ReportedFileSize ?? node.Data.Length).ToString(CultureInfo.InvariantCulture) : "64",
                         "st_blocks", "8",
                         "st_nlink", "1",
                         "st_ifmt", node.Kind switch
@@ -904,7 +925,7 @@ public sealed class AfcTransferTests : IDisposable
                     }
 
                     open.Buffer.Dispose();
-                    return Status(AfcErrorCode.Success);
+                    return Status(CloseError);
                 }
 
                 default:

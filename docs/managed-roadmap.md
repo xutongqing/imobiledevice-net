@@ -42,6 +42,8 @@ P2、P3 的普通 USB 路径可以在 P1 旧系统隧道兼容期间交付。开
 
 ## 维护与验收口径
 
+P2 的应用查询、House Arrest 和 AFC 递归传输已完成 Windows USB 真机联验，见[调用示例与真机结果](managed-apps-afc.md)。
+
 P3 在 `main` 提供 MobileBackup2 全量、增量、加密备份和恢复，主机端用独立工作目录处理每次操作。接口、存储要求、Windows 验收及待验证项见[完整备份与恢复](managed-backup.md)。
 
 P1 已接入按 UDID 选机、USB/网络连接筛选、多设备摘要以及 usbmuxd 与 Lockdown 连接诊断，并完成 Windows 单机实测。Bonjour 主动发现、自动重连和更多隧道路径仍在 P1 后续范围。[接口与真机验收记录](managed-device-discovery.md)

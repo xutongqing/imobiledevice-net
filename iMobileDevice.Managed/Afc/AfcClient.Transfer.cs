@@ -573,7 +573,7 @@ public sealed partial class AfcClient
         state.Report(AfcTransferStage.FileStarted, remoteDisplayPath, localTargetPath, relativePath, 0, expectedSize);
 
         ulong handle = await OpenFileHandleAsync(remoteReadPath, AfcFileOpenMode.ReadOnly, cancellationToken).ConfigureAwait(false);
-        bool readSucceeded = false;
+        bool closeAttempted = false;
         bool movedIntoPlace = false;
         try
         {
@@ -603,19 +603,13 @@ public sealed partial class AfcClient
                 await output.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            readSucceeded = true;
-        }
-        finally
-        {
-            await CloseHandleBestEffortAsync(handle, throwOnError: readSucceeded).ConfigureAwait(false);
-            if (!readSucceeded)
+            if (fileBytes < expectedSize)
             {
-                TryDeleteFile(tempFilePath);
+                throw new EndOfStreamException($"AFC returned {fileBytes} of {expectedSize} bytes for '{remoteDisplayPath}'.");
             }
-        }
 
-        try
-        {
+            closeAttempted = true;
+            await CloseFileHandleAsync(handle, CancellationToken.None).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
             if (options.PreserveModifyTime && fileInfo.ModifyTime is DateTimeOffset mtime)
             {
@@ -631,6 +625,10 @@ public sealed partial class AfcClient
             if (!movedIntoPlace)
             {
                 TryDeleteFile(tempFilePath);
+            }
+            if (!closeAttempted)
+            {
+                await CloseHandleBestEffortAsync(handle, throwOnError: false).ConfigureAwait(false);
             }
         }
 
