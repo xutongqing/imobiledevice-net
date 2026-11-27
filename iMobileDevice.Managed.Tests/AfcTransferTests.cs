@@ -379,9 +379,15 @@ public sealed class AfcTransferTests : IDisposable
 
         await reachedSecondChunk.Task.WaitAsync(timeout.Token);
         cts.Cancel();
-        releaseServer.TrySetResult();
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pullTask.WaitAsync(timeout.Token));
+        try
+        {
+            // Keep the reply pending until cancellation is observed inside the exchange.
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pullTask.WaitAsync(timeout.Token));
+        }
+        finally
+        {
+            releaseServer.TrySetResult();
+        }
 
         // Underlying AfcClient cancellation semantics must remain intact (in-flight cancellation closes transport).
         await Assert.ThrowsAsync<ObjectDisposedException>(() => afc.GetDeviceInfoAsync(timeout.Token));
@@ -429,9 +435,14 @@ public sealed class AfcTransferTests : IDisposable
 
         await reachedSecondWrite.Task.WaitAsync(timeout.Token);
         cts.Cancel();
-        releaseServer.TrySetResult();
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pushTask.WaitAsync(timeout.Token));
+        try
+        {
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pushTask.WaitAsync(timeout.Token));
+        }
+        finally
+        {
+            releaseServer.TrySetResult();
+        }
         await Assert.ThrowsAsync<ObjectDisposedException>(() => afc.GetDeviceInfoAsync(timeout.Token));
 
         Assert.Equal(["01_done.bin"], completedViaProgress);
