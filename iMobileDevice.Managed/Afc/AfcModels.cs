@@ -85,6 +85,7 @@ public sealed record AfcFileInfo(
     public bool IsDirectory => string.Equals(FileType, "S_IFDIR", StringComparison.Ordinal);
     public bool IsRegularFile => string.Equals(FileType, "S_IFREG", StringComparison.Ordinal);
     public bool IsSymbolicLink => string.Equals(FileType, "S_IFLNK", StringComparison.Ordinal);
+    public string? LinkTarget => RawProperties.TryGetValue("LinkTarget", out string? target) ? target : null;
 }
 
 public sealed class AfcException : Exception
