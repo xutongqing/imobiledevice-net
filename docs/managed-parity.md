@@ -1,10 +1,10 @@
 # pymobiledevice3 与 iMobileDevice.Managed 逐项对照
 
-以 2026-11-26 的 pymobiledevice3 `9d54c30` 与本地 Managed 协议实现 `fc78d8a` 为基线。本页按上游实际命令路径列出 **30 个顶层分组、303 个末级操作**，每个命令链接到固定提交的实现。单命令分组按实际调用方式记为 `pcap`、`btlogger` 等。公开 SDK 服务另见 [API 与协议对照表](managed-api-parity.md)，实施顺序见[路线图](managed-roadmap.md)。
+以上游 2026-11-26 的 pymobiledevice3 `9d54c30` 为固定基线，Managed 从 `fc78d8a` 起随实现更新。本页按实际命令路径列出 **30 个顶层分组、303 个末级操作**，每个命令链接到固定提交的实现。单命令分组按实际调用方式记为 `pcap`、`btlogger` 等。公开 SDK 服务另见 [API 与协议对照表](managed-api-parity.md)，实施顺序见[路线图](managed-roadmap.md)。
 
 | 已有 C# 对应操作 | 部分覆盖 | 待实现 | 合计 |
 | ---: | ---: | ---: | ---: |
-| 5 | 21 | 277 | 303 |
+| 6 | 21 | 276 | 303 |
 
 **已有**表示公开 C# API 可以完成该操作，返回结构、字节或流均可。**部分**列出可复用入口和缺少的语义或版本路径。**待实现**表示尚缺该服务或工作流。状态按源码核对；真机验证独立记录。原生绑定、原生工具、只打开通用服务流均不自动计入业务功能覆盖。
 
@@ -269,7 +269,7 @@
 
 | 上游操作及源码 | 用户操作 | Managed | C# 入口或已知边界 | 阶段 |
 | --- | --- | --- | --- | --- |
-| [`doctor`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/doctor.py#L19) | 诊断主机传输能力 | 待实现 | — | P1 |
+| [`doctor`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/doctor.py#L19) | 诊断主机传输能力 | 部分 | [`DeviceConnectionDiagnostics.InspectAsync`](../iMobileDevice.Managed/Diagnostics/DeviceConnectionDiagnostics.cs) 检查 usbmuxd、匹配设备及 Lockdown 配对会话。Bonjour、RSD 隧道、开发者环境诊断待补 | P1 |
 
 ## lockdown · 设备属性与配对
 
@@ -441,7 +441,7 @@
 | 上游操作及源码 | 用户操作 | Managed | C# 入口或已知边界 | 阶段 |
 | --- | --- | --- | --- | --- |
 | [`usbmux forward`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/usbmux.py#L26) | 本地端口监听及双向转发 | 部分 | [`ConnectAsync`](../iMobileDevice.Managed/Usbmuxd/UsbmuxdClient.cs) 可打开设备端口，缺本地监听及转发循环 | P1 |
-| [`usbmux list`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/usbmux.py#L80) | 枚举 USB 和网络设备 | 部分 | [`ListDevicesAsync`](../iMobileDevice.Managed/Usbmuxd/UsbmuxdClient.cs) 枚举设备及连接类型，完整设备摘要需组合 Lockdown | P1 |
+| [`usbmux list`](https://github.com/doronz88/pymobiledevice3/blob/9d54c30ed2a37c761ec43dbdb9eeaaa613daecb2/pymobiledevice3/cli/usbmux.py#L80) | 枚举 USB 和网络设备 | 已有 | [`ListDevicesAsync / ListDevicesByConnectionTypeAsync`](../iMobileDevice.Managed/Usbmuxd/UsbmuxdClient.cs) 列出 daemon 已发现的连接；[`InspectAsync`](../iMobileDevice.Managed/Diagnostics/DeviceConnectionDiagnostics.cs) 提供每条连接的设备摘要和独立诊断结果 | P1 |
 
 ## webinspector · 浏览器和 WebView
 

@@ -21,6 +21,8 @@
 
 ## 一、快速上手：`iMobileDevice.Managed`（纯 C#，零原生依赖）
 
+连接多台设备时，使用 `SelectDeviceAsync` 或 `ConnectByUdidAsync` 指定 UDID；`DeviceConnectionDiagnostics.InspectAsync` 可查看每条连接的摘要和配对会话状态。[P1 接口与 Windows 真机验证](docs/managed-device-discovery.md)
+
 ### 1. USB 设备发现 + Lockdown TLS 会话 + AFC 文件读写
 
 ```csharp

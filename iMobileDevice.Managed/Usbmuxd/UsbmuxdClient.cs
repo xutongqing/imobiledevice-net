@@ -26,6 +26,9 @@ public sealed class UsbmuxdClient
         this.endpoint = endpoint ?? ResolveDefaultEndPoint();
     }
 
+    /// <summary>The configured host daemon endpoint, as displayed in diagnostics.</summary>
+    public string Address => endpoint.ToString() ?? string.Empty;
+
     public static EndPoint ResolveDefaultEndPoint()
     {
         string? envAddr = Environment.GetEnvironmentVariable("USBMUXD_SOCKET_ADDRESS");
@@ -82,6 +85,43 @@ public sealed class UsbmuxdClient
 
         return result;
     }
+
+    /// <summary>Lists every route of the specified type, in daemon order.</summary>
+    public async Task<IReadOnlyList<UsbmuxdDeviceInfo>> ListDevicesByConnectionTypeAsync(
+        UsbmuxdConnectionType connectionType, CancellationToken cancellationToken = default)
+    {
+        var devices = await ListDevicesAsync(cancellationToken).ConfigureAwait(false);
+        return devices.Where(device => device.ConnectionType == connectionType).ToArray();
+    }
+
+    /// <summary>Finds a matching route. USB is preferred, followed by the last matching route in daemon order.</summary>
+    public async Task<UsbmuxdDeviceInfo?> SelectDeviceAsync(string? udid = null,
+        UsbmuxdConnectionType? connectionType = null, CancellationToken cancellationToken = default)
+    {
+        string? serial = NormalizeUdid(udid);
+        var devices = await ListDevicesAsync(cancellationToken).ConfigureAwait(false);
+        UsbmuxdDeviceInfo? fallback = null;
+        foreach (var device in MatchingDevices(devices, serial, connectionType))
+        {
+            if (device.ConnectionType == UsbmuxdConnectionType.Usb) return device;
+            fallback = device;
+        }
+
+        return fallback;
+    }
+
+    internal static string? NormalizeUdid(string? udid)
+    {
+        if (udid is null) return null;
+        string serial = udid.Trim().Replace("-", "");
+        ArgumentException.ThrowIfNullOrWhiteSpace(serial, nameof(udid));
+        return serial;
+    }
+
+    internal static IEnumerable<UsbmuxdDeviceInfo> MatchingDevices(IReadOnlyList<UsbmuxdDeviceInfo> devices,
+        string? normalizedUdid, UsbmuxdConnectionType? connectionType) =>
+        devices.Where(device => (connectionType == null || device.ConnectionType == connectionType) &&
+            (normalizedUdid == null || string.Equals(device.SerialNumber.Replace("-", ""), normalizedUdid, StringComparison.OrdinalIgnoreCase)));
 
     public async Task<string> ReadBuidAsync(CancellationToken cancellationToken = default)
     {
@@ -240,6 +280,7 @@ public sealed class UsbmuxdClient
         catch (Exception ex)
         {
             socket.Dispose();
+            cancellationToken.ThrowIfCancellationRequested();
             throw new UsbmuxdException($"Failed to connect to usbmuxd at '{endpoint}'.", innerException: ex);
         }
     }

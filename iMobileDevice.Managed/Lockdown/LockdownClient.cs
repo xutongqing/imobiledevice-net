@@ -106,6 +106,22 @@ public sealed class LockdownClient : IAsyncDisposable
         }
     }
 
+    /// <summary>Connects to the specified UDID over a matching usbmuxd route. Throws DeviceNotFound if absent.</summary>
+    public static async Task<LockdownClient> ConnectByUdidAsync(string udid, UsbmuxdClient? usbmuxd = null,
+        UsbmuxdConnectionType? connectionType = null, bool handshake = true, bool autoPair = false,
+        string label = "iMobileDevice.Managed", CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(udid);
+        usbmuxd ??= new UsbmuxdClient();
+        var device = await usbmuxd.SelectDeviceAsync(udid, connectionType, cancellationToken).ConfigureAwait(false);
+        if (device is null)
+        {
+            throw new LockdownException("No device matches the requested UDID and connection type.", "DeviceNotFound");
+        }
+
+        return await ConnectAsync(usbmuxd, device, handshake, autoPair, label, cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
     public static async Task<LockdownClient> ConnectFirstDeviceAsync(
         UsbmuxdClient? usbmuxd = null,
         bool handshake = true,
