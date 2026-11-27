@@ -22,7 +22,7 @@ var download = await files.PullAsync(upload.DestinationPath, localOutputDirector
 
 ## Windows USB 验收
 
-2026-11-27 在 Windows、`iPhone17,1`、iOS 27.3 上，用仅引用独立 Managed NuGet 的 .NET 8 程序执行。应用查询与同设备的 pymobiledevice3 11.57.0 对照，逐组比较完整 Bundle ID 集合。
+2026-11-27 在 Windows、`iPhone17,1`、iOS 27.3 上执行。集成提交 `8a5e210` 的 79 项无硬件回归均通过。下载 Actions 制品并核对 SHA-256 后，从隔离包源还原只引用 `iMobileDevice.Managed.0.1.0-ci.23.1` 的 .NET 8 程序，复跑下表中的真机操作。应用查询与同设备的 pymobiledevice3 11.57.0 对照，逐组比较完整 Bundle ID 集合。[Actions #23](https://github.com/xutongqing/imobiledevice-net/actions/runs/45965104872) · [真机实测的 NuGet 制品](https://github.com/xutongqing/imobiledevice-net/actions/runs/45965104872/artifacts/15182712002)
 
 | 操作 | 实测结果 |
 | --- | --- |
