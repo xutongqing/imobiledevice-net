@@ -31,6 +31,7 @@ public static class AppContainer
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(lockdown);
+        ArgumentException.ThrowIfNullOrEmpty(bundleIdentifier);
         Stream serviceStream = await lockdown.ConnectToServiceAsync(ServiceName, cancellationToken: cancellationToken).ConfigureAwait(false);
         return await OpenAsync(serviceStream, bundleIdentifier, scope, cancellationToken).ConfigureAwait(false);
     }
@@ -45,8 +46,9 @@ public static class AppContainer
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>An AFC session rooted at the vended directory; disposing it releases the service stream.</returns>
     /// <remarks>
-    /// The stream is disposed when the vend is refused or cancelled, so a failed call never leaks the
-    /// service connection. A successful call transfers ownership to the returned client.
+    /// The stream is disposed whenever the call fails, including a refused vend, a cancelled request and
+    /// an invalid bundle identifier, so a failed call never leaks the service connection. A successful
+    /// call transfers ownership to the returned client.
     /// </remarks>
     public static async Task<AfcClient> OpenAsync(
         Stream serviceStream,
@@ -55,15 +57,20 @@ public static class AppContainer
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(serviceStream);
-        ArgumentException.ThrowIfNullOrEmpty(bundleIdentifier);
 
         try
         {
+            ArgumentException.ThrowIfNullOrEmpty(bundleIdentifier);
             cancellationToken.ThrowIfCancellationRequested();
             var wire = new AppsWire(serviceStream);
             await wire.SendAsync(new PlistDictionary
             {
-                ["Command"] = scope == AppContainerScope.Documents ? VendDocuments : VendContainer,
+                ["Command"] = scope switch
+                {
+                    AppContainerScope.Documents => VendDocuments,
+                    AppContainerScope.Container => VendContainer,
+                    _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, "Unknown container scope."),
+                },
                 ["Identifier"] = bundleIdentifier,
             }, cancellationToken).ConfigureAwait(false);
 

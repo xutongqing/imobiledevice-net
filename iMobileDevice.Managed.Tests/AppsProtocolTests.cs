@@ -13,12 +13,17 @@ public class AppsProtocolTests
     private const string BundleB = "com.example.beta";
 
     [Fact]
-    public async Task ListMergesBatchedBrowseRepliesAndSortsByBundleIdentifier()
+    public async Task ListLooksUpApplicationsWithTypeAndPlaceholderOptions()
     {
-        byte[] replies = Frames(
-            new PlistDictionary { ["CurrentList"] = new PlistArray { App(BundleB, "User") } },
-            new PlistDictionary { ["CurrentList"] = new PlistArray { App(BundleA, "System") } },
-            new PlistDictionary { ["Status"] = "Complete" });
+        byte[] replies = Frames(new PlistDictionary
+        {
+            ["LookupResult"] = new PlistDictionary
+            {
+                [BundleB] = App(BundleB, "User"),
+                [BundleA] = App(BundleA, "System"),
+            },
+            ["Status"] = "Complete",
+        });
 
         using var wire = new DuplexStream(replies);
         await using var client = new InstallationProxyClient(wire);
@@ -29,7 +34,7 @@ public class AppsProtocolTests
         Assert.Equal("System", apps[0].ApplicationType);
         Assert.Equal("User", apps[1].ApplicationType);
         (PlistDictionary request, _) = ParseFirstFrame(wire.BytesWritten);
-        Assert.Equal("Browse", request.GetString("Command"));
+        Assert.Equal("Lookup", request.GetString("Command"));
         PlistDictionary options = request.GetDictionary("ClientOptions")!;
         Assert.Equal("Hidden", options.GetString("ApplicationType"));
         Assert.True(options.GetBoolean("ShowPlaceholders"));
@@ -38,11 +43,69 @@ public class AppsProtocolTests
     }
 
     [Fact]
+    public async Task ListWithoutPlaceholdersLooksUpExactlyLikeQuerySoBothAgreeOnWhatExists()
+    {
+        // The device omits offloaded applications unless ShowPlaceholders is set, so a list that
+        // used another command would report apps that QueryAsync calls unknown.
+        byte[] replies = Frames(new PlistDictionary
+        {
+            ["LookupResult"] = new PlistDictionary { [BundleA] = App(BundleA, "User") },
+            ["Status"] = "Complete",
+        });
+
+        using var wire = new DuplexStream(replies);
+        await using var client = new InstallationProxyClient(wire);
+
+        IReadOnlyList<AppInfo> apps = await client.ListAsync();
+
+        Assert.Equal(new[] { BundleA }, apps.Select(static app => app.BundleIdentifier));
+        (PlistDictionary request, _) = ParseFirstFrame(wire.BytesWritten);
+        Assert.Equal("Lookup", request.GetString("Command"));
+        PlistDictionary options = request.GetDictionary("ClientOptions")!;
+        Assert.Equal("Any", options.GetString("ApplicationType"));
+        Assert.False(options.ContainsKey("ShowPlaceholders"));
+    }
+
+    [Fact]
+    public async Task ListMergesBatchesUntilTheDeviceReportsComplete()
+    {
+        // The device chooses the batch marker; every status other than Complete keeps the loop reading.
+        byte[] replies = Frames(
+            new PlistDictionary { ["LookupResult"] = new PlistDictionary { [BundleB] = App(BundleB, "User") }, ["Status"] = "InProgress" },
+            new PlistDictionary { ["LookupResult"] = new PlistDictionary { [BundleA] = App(BundleA, "User") }, ["Status"] = "Complete" });
+
+        using var wire = new DuplexStream(replies);
+        await using var client = new InstallationProxyClient(wire);
+
+        IReadOnlyList<AppInfo> apps = await client.ListAsync();
+
+        Assert.Equal(new[] { BundleA, BundleB }, apps.Select(static app => app.BundleIdentifier));
+    }
+
+    [Fact]
+    public async Task ListDisconnectBetweenBatchesIsATransportFailureRatherThanAPartialList()
+    {
+        byte[] replies = Frames(new PlistDictionary
+        {
+            ["LookupResult"] = new PlistDictionary { [BundleA] = App(BundleA, "User") },
+            ["Status"] = "InProgress",
+        });
+
+        using var wire = new DuplexStream(replies);
+        await using var client = new InstallationProxyClient(wire);
+
+        await Assert.ThrowsAsync<EndOfStreamException>(() => client.ListAsync());
+    }
+
+    [Fact]
     public async Task ListAddsDiskUsageFromASecondLookupWhenSizesAreRequested()
     {
         byte[] replies = Frames(
-            new PlistDictionary { ["CurrentList"] = new PlistArray { App(BundleA, "User") } },
-            new PlistDictionary { ["Status"] = "Complete" },
+            new PlistDictionary
+            {
+                ["LookupResult"] = new PlistDictionary { [BundleA] = App(BundleA, "User") },
+                ["Status"] = "Complete",
+            },
             new PlistDictionary
             {
                 ["LookupResult"] = new PlistDictionary
@@ -61,7 +124,7 @@ public class AppsProtocolTests
         Assert.Equal(4096, app.StaticDiskUsage);
         Assert.Equal(512, app.DynamicDiskUsage);
         List<PlistNode> requests = ParseFrames(wire.BytesWritten);
-        Assert.Equal("Browse", requests[0].AsDictionary().GetString("Command"));
+        Assert.Equal("Lookup", requests[0].AsDictionary().GetString("Command"));
         PlistDictionary second = requests[1].AsDictionary();
         Assert.Equal("Lookup", second.GetString("Command"));
         PlistDictionary options = second.GetDictionary("ClientOptions")!;
@@ -139,7 +202,11 @@ public class AppsProtocolTests
     [Fact]
     public async Task TruncatedReplyIsReportedAsATransportFailure()
     {
-        byte[] frame = Frame(new PlistDictionary { ["CurrentList"] = new PlistArray { App(BundleA, "User") } });
+        byte[] frame = Frame(new PlistDictionary
+        {
+            ["LookupResult"] = new PlistDictionary { [BundleA] = App(BundleA, "User") },
+            ["Status"] = "Complete",
+        });
 
         using var wire = new DuplexStream(frame[..^12]);
         await using var client = new InstallationProxyClient(wire);
@@ -148,11 +215,9 @@ public class AppsProtocolTests
     }
 
     [Fact]
-    public async Task EmptyReplyBeforeCompleteIsReportedAsATransportFailure()
+    public async Task ReplyWithoutAnyResultBeforeTheStreamEndsIsATransportFailure()
     {
-        byte[] replies = Frames(new PlistDictionary { ["CurrentList"] = new PlistArray() }, new PlistDictionary());
-
-        using var wire = new DuplexStream(replies);
+        using var wire = new DuplexStream(Frames(new PlistDictionary()));
         await using var client = new InstallationProxyClient(wire);
 
         await Assert.ThrowsAsync<IOException>(() => client.ListAsync());
@@ -227,6 +292,17 @@ public class AppsProtocolTests
         Assert.Equal("InternalError", error.DeviceError);
         Assert.Equal("Vend failed", error.DeviceErrorDescription);
         Assert.True(refused.Closed);
+    }
+
+    [Fact]
+    public async Task InvalidBundleIdentifierReleasesTheStreamInsteadOfLeakingTheServiceConnection()
+    {
+        using var wire = new DuplexStream(Array.Empty<byte>());
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => AppContainer.OpenAsync(wire, string.Empty, AppContainerScope.Documents));
+        Assert.True(wire.Closed);
+        Assert.Empty(wire.BytesWritten);
     }
 
     [Fact]

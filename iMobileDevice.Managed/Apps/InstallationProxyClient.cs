@@ -7,9 +7,9 @@ using iMobileDevice.Managed.Plist;
 /// Pure managed client for the Installation Proxy (<c>com.apple.mobile.installation_proxy</c>).
 /// </summary>
 /// <remarks>
-/// Every request/response pair is serialized on one service connection. When the device reports an
-/// error, the reply stream position is no longer trustworthy, so the client disposes itself before
-/// the <see cref="AppsException"/> escapes; open a new connection to retry.
+/// Every request/response pair is serialized on one service connection. When a request fails, either
+/// because the device reports an error or because the stream breaks mid-reply, the client disposes
+/// itself before the exception escapes; open a new connection to retry.
 /// </remarks>
 public sealed class InstallationProxyClient : IAsyncDisposable
 {
@@ -38,9 +38,9 @@ public sealed class InstallationProxyClient : IAsyncDisposable
     /// Lists installed applications, sorted by bundle identifier. Equivalent to <c>apps list</c>.
     /// </summary>
     /// <remarks>
-    /// The list comes from <c>Browse</c>, which streams the result in batches until the device reports
-    /// <c>Complete</c>. Disk usage is not part of a browse reply, so sizes are merged from a second
-    /// <c>Lookup</c> pass. Whether placeholder applications appear is decided by the device.
+    /// Uses the same <c>Lookup</c> command as <see cref="QueryAsync"/>, because the device decides
+    /// whether offloaded applications appear from the <c>ShowPlaceholders</c> option. Disk usage is not
+    /// part of the first reply, so sizes are merged from a second <c>Lookup</c> pass.
     /// </remarks>
     /// <param name="type">Application type filter, sent as the <c>ApplicationType</c> option.</param>
     /// <param name="calculateSizes">Run the second lookup that adds <c>StaticDiskUsage</c> and <c>DynamicDiskUsage</c>.</param>
@@ -61,8 +61,8 @@ public sealed class InstallationProxyClient : IAsyncDisposable
 
         return ExchangeAsync(async token =>
         {
-            Dictionary<string, PlistDictionary> apps = await BrowseAsync(options, token).ConfigureAwait(false);
-            if (calculateSizes)
+            Dictionary<string, PlistDictionary> apps = await LookupAsync(options, token).ConfigureAwait(false);
+            if (calculateSizes && apps.Count != 0)
             {
                 await MergeSizesAsync(apps, options, token).ConfigureAwait(false);
             }
@@ -125,39 +125,7 @@ public sealed class InstallationProxyClient : IAsyncDisposable
     {
         if (Interlocked.Exchange(ref closed, 1) == 0)
         {
-            ioLock.Dispose();
             await stream.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
-    private async Task<Dictionary<string, PlistDictionary>> BrowseAsync(PlistDictionary options, CancellationToken token)
-    {
-        await SendAsync(new PlistDictionary { ["Command"] = "Browse", ["ClientOptions"] = options }, token).ConfigureAwait(false);
-        var apps = new Dictionary<string, PlistDictionary>(StringComparer.Ordinal);
-        while (true)
-        {
-            PlistDictionary reply = await ReceiveReplyAsync("Browse", token).ConfigureAwait(false);
-            if (reply.GetArray("CurrentList") is { } batch)
-            {
-                foreach (PlistNode entry in batch)
-                {
-                    // Batching can repeat an application; the last copy wins.
-                    if (entry is PlistDictionary app && app.GetString("CFBundleIdentifier") is { } bundle)
-                    {
-                        apps[bundle] = app;
-                    }
-                }
-            }
-
-            if (reply.GetString("Status") == "Complete")
-            {
-                return apps;
-            }
-
-            if (reply.Count == 0)
-            {
-                throw new IOException("The device ended the Browse replies before reporting Complete.");
-            }
         }
     }
 
@@ -267,10 +235,7 @@ public sealed class InstallationProxyClient : IAsyncDisposable
         }
         finally
         {
-            if (Volatile.Read(ref closed) == 0)
-            {
-                ioLock.Release();
-            }
+            ioLock.Release();
         }
     }
 
