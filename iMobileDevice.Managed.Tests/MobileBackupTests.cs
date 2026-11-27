@@ -151,6 +151,49 @@ public sealed class MobileBackupTests : IDisposable
     }
 
     [Fact]
+    public void FailedPublicationKeepsCompletedSnapshotAndRetriesOnNextOpen()
+    {
+        using (var first = new BackupStorage(root, "phone"))
+        {
+            MakeSnapshot(first.WorkingSnapshot);
+            // An occupied destination makes the rename fail without modifying that entry.
+            File.WriteAllText(first.Snapshot, "occupied");
+            Assert.ThrowsAny<IOException>(first.Publish);
+        }
+        Assert.Equal("occupied", File.ReadAllText(Path.Combine(root, "phone")));
+        File.Delete(Path.Combine(root, "phone"));
+        using var recovered = new BackupStorage(root, "phone");
+        Assert.Equal("good", File.ReadAllText(Path.Combine(recovered.Snapshot, "Manifest.db")));
+        Assert.False(Directory.Exists(recovered.WorkingSnapshot));
+    }
+
+    [Fact]
+    public void PublishesWhileAnotherProcessHasAStagedFileOpenForReading()
+    {
+        using var store = new BackupStorage(root, "phone");
+        MakeSnapshot(store.WorkingSnapshot);
+        using var reader = new FileStream(Path.Combine(store.WorkingSnapshot, "Manifest.db"), FileMode.Open, FileAccess.Read, FileShare.Read);
+        store.Publish();
+        Assert.Equal("good", File.ReadAllText(Path.Combine(store.Snapshot, "Manifest.db")));
+        BackupStorage.ValidateSnapshot(store.Snapshot);
+    }
+
+    [Fact]
+    public void ResumesInterruptedFileByFilePublicationBeforeExposingFinishedStatus()
+    {
+        string state = Path.Combine(root, ".imobiledevice-managed", "phone");
+        MakeSnapshot(Path.Combine(state, "work", "phone"));
+        Directory.CreateDirectory(Path.Combine(root, "phone"));
+        File.WriteAllText(Path.Combine(root, "phone", "Manifest.db"), "part");
+        File.WriteAllText(Path.Combine(state, "copying"), "");
+        File.WriteAllText(Path.Combine(state, "ready"), "");
+        using var recovered = new BackupStorage(root, "phone");
+        BackupStorage.ValidateSnapshot(recovered.Snapshot);
+        Assert.Equal("good", File.ReadAllText(Path.Combine(recovered.Snapshot, "Manifest.db")));
+        Assert.False(File.Exists(Path.Combine(state, "ready")));
+    }
+
+    [Fact]
     public async Task UnlocksManifestKeyAndListsAgainstAPrivateMetadataOnlyCopy()
     {
         using var bag = new MemoryStream();

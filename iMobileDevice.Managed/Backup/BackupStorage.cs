@@ -7,6 +7,8 @@ internal sealed class BackupStorage : IDisposable
 {
     private readonly FileStream lease;
     private readonly string previous;
+    private readonly string ready;
+    private readonly string copying;
     public string Snapshot { get; }
     public string WorkRoot { get; }
     public string WorkingSnapshot { get; }
@@ -24,7 +26,12 @@ internal sealed class BackupStorage : IDisposable
         try
         {
             previous = Resolve(state, "previous");
+            ready = Resolve(state, "ready");
+            copying = Resolve(state, "copying");
             WorkRoot = Resolve(state, "work");
+            WorkingSnapshot = Resolve(WorkRoot, identifier);
+            if (File.Exists(ready)) PublishPrepared();
+            File.Delete(copying);
             // Recover a publication interrupted between the two same-volume renames.
             if (Directory.Exists(previous))
             {
@@ -33,7 +40,6 @@ internal sealed class BackupStorage : IDisposable
             }
             if (Directory.Exists(WorkRoot)) Directory.Delete(WorkRoot, true);
             CreatePrivateDirectory(WorkRoot);
-            WorkingSnapshot = Resolve(WorkRoot, identifier);
         }
         catch
         {
@@ -151,16 +157,60 @@ internal sealed class BackupStorage : IDisposable
     public void Publish()
     {
         ValidateSnapshot(WorkingSnapshot);
-        if (Directory.Exists(Snapshot)) Directory.Move(Snapshot, previous);
-        try
+        using (var marker = File.Create(ready)) marker.Flush(flushToDisk: true);
+        PublishPrepared();
+    }
+
+    private static bool IsBusyOnWindows(Exception ex) => OperatingSystem.IsWindows() &&
+        ex is IOException or UnauthorizedAccessException && (ex.HResult & 0xffff) is 5 or 32 or 33;
+
+    private static void RenameDirectory(string from, string to)
+    {
+        for (int retry = 0; ; retry++)
         {
-            Directory.Move(WorkingSnapshot, Snapshot);
+            try { Directory.Move(from, to); return; }
+            catch (Exception ex) when (retry < 6 && IsBusyOnWindows(ex))
+            { Thread.Sleep(TimeSpan.FromMilliseconds(100 << retry)); }
         }
-        catch
+    }
+
+    private void PublishPrepared()
+    {
+        // Keep the verified staging tree until it is published. A subsequent open can finish the commit.
+        if (Directory.Exists(WorkingSnapshot))
         {
-            if (Directory.Exists(previous)) Directory.Move(previous, Snapshot);
-            throw;
+            if (!File.Exists(copying))
+            {
+                if (Directory.Exists(Snapshot)) RenameDirectory(Snapshot, previous);
+                try { RenameDirectory(WorkingSnapshot, Snapshot); }
+                catch (Exception ex) when (IsBusyOnWindows(ex) && !Path.Exists(Snapshot))
+                {
+                    // Some Windows file filters allow reading files while denying a rename of their parent.
+                    File.Create(copying).Dispose();
+                }
+            }
+            if (File.Exists(copying)) PublishFiles();
         }
+        ValidateSnapshot(Snapshot);
+        File.Delete(ready);
+        File.Delete(copying);
+    }
+
+    private void PublishFiles()
+    {
+        CreatePrivateDirectory(Snapshot);
+        string status = Resolve(Snapshot, "Status.plist");
+        File.Delete(status);
+        foreach (var entry in Directory.EnumerateFileSystemEntries(WorkingSnapshot))
+        {
+            var name = Path.GetFileName(entry);
+            if (name == "Status.plist") continue;
+            CopyAsync(entry, Resolve(Snapshot, name), CancellationToken.None).GetAwaiter().GetResult();
+        }
+        // External backup readers see a finished snapshot only after every file has landed.
+        string temp = Resolve(Snapshot, ".status-publishing");
+        File.Copy(Resolve(WorkingSnapshot, "Status.plist"), temp, true);
+        File.Move(temp, status, true);
     }
 
     public void Dispose()
@@ -168,8 +218,11 @@ internal sealed class BackupStorage : IDisposable
         // The next operation also cleans interrupted work. A cleanup error must not mask the protocol result.
         try
         {
-            if (Directory.Exists(WorkRoot)) Directory.Delete(WorkRoot, true);
-            if (Directory.Exists(previous) && Directory.Exists(Snapshot)) Directory.Delete(previous, true);
+            if (!File.Exists(ready))
+            {
+                if (Directory.Exists(WorkRoot)) Directory.Delete(WorkRoot, true);
+                if (Directory.Exists(previous) && Directory.Exists(Snapshot)) Directory.Delete(previous, true);
+            }
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
