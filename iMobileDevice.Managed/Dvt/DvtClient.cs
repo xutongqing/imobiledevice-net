@@ -1,24 +1,59 @@
 namespace iMobileDevice.Managed.Dvt;
 
+using iMobileDevice.Managed.Lockdown;
 using iMobileDevice.Managed.RemoteXpc;
+using iMobileDevice.Managed.Tunnel;
+using iMobileDevice.Managed.Usbmuxd;
 
 /// <summary>
 /// Pure managed iOS 17+ / 18 DVT (Developer Tools) client over <c>com.apple.instruments.dtservicehub</c>,
-/// supporting live PNG screen capture (<c>takeScreenshot</c>) and extensible DTX service channels.
+/// supporting screenshots, process monitoring and extensible DTX service channels.
 /// </summary>
-public sealed class DvtClient : IAsyncDisposable
+public sealed partial class DvtClient : IAsyncDisposable
 {
     public const string DtServiceHubName = "com.apple.instruments.dtservicehub";
     public const string ScreenshotServiceIdentifier = "com.apple.instruments.server.services.screenshot";
     private static readonly byte[] PngMagic = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
     private readonly DtxConnection dtx;
+    private UserspaceTcpTunnel? ownedTunnel;
+    private RemoteServiceDiscoveryClient? ownedRsd;
     private int nextChannelCode;
     private uint? screenshotChannel;
 
     private DvtClient(DtxConnection dtx)
     {
         this.dtx = dtx;
+    }
+
+    /// <summary>Opens an Instruments session on the specified paired USB device (iOS 17.4+).</summary>
+    public static async Task<DvtClient> ConnectUsbAsync(string udid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(udid);
+        var mux = new UsbmuxdClient();
+        var devices = await mux.ListDevicesAsync(cancellationToken).ConfigureAwait(false);
+        var device = devices.FirstOrDefault(d => d.ConnectionType == UsbmuxdConnectionType.Usb &&
+            string.Equals(d.SerialNumber, udid, StringComparison.OrdinalIgnoreCase))
+            ?? throw new LockdownException("The specified USB device is not connected.");
+        await using var lockdown = await LockdownClient.ConnectAsync(mux, device, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var proxy = await CoreDeviceProxyClient.ConnectAsync(lockdown, cancellationToken).ConfigureAwait(false);
+        UserspaceTcpTunnel? tunnel = null;
+        RemoteServiceDiscoveryClient? rsd = null;
+        try
+        {
+            tunnel = new UserspaceTcpTunnel(proxy);
+            rsd = await RemoteServiceDiscoveryClient.ConnectAsync(tunnel, cancellationToken).ConfigureAwait(false);
+            var client = await ConnectAsync(rsd, cancellationToken).ConfigureAwait(false);
+            client.ownedTunnel = tunnel;
+            client.ownedRsd = rsd;
+            return client;
+        }
+        catch
+        {
+            await using var closeTransport = (IAsyncDisposable?)tunnel ?? proxy;
+            await using var closeRsd = rsd;
+            throw;
+        }
     }
 
     public static async Task<DvtClient> ConnectAsync(RemoteServiceDiscoveryClient rsd, CancellationToken cancellationToken = default)
@@ -95,5 +130,10 @@ public sealed class DvtClient : IAsyncDisposable
         throw new InvalidDataException($"DVT takeScreenshot did not return a valid PNG payload (got {reply.Payload?.GetType().Name ?? "null"}).");
     }
 
-    public ValueTask DisposeAsync() => dtx.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        await using var closeTunnel = ownedTunnel;
+        await using var closeRsd = ownedRsd;
+        await dtx.DisposeAsync().ConfigureAwait(false);
+    }
 }

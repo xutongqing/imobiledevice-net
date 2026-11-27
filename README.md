@@ -8,7 +8,7 @@
 
 | 项目 | 定位 | 依赖 | 亮点能力 |
 | --- | --- | --- | --- |
-| **[`iMobileDevice.Managed`](iMobileDevice.Managed/)** | **纯 C# 托管协议层（`net8.0`，推荐用于新功能与 iOS 17+/18）** | **零原生库、零外部 NuGet、无需 root / 虚拟网卡驱动** | 纯托管 `Plist`（XML + `bplist00`）、`Usbmuxd`、`Lockdown`（配对 + 证书绑定 `SslStream` TLS）、`AFC` 文件系统、以及 **iOS 17.4+/18 `CoreDeviceProxy` + 用户态 IPv6/TCP 隧道 + HTTP/2 `RemoteXPC` + `RSD` + `DVT` 真机截屏** |
+| **[`iMobileDevice.Managed`](iMobileDevice.Managed/)** | **纯 C# 托管协议层（`net8.0`，推荐用于新功能与 iOS 17+/18）** | **零原生库、零外部 NuGet、无需 root / 虚拟网卡驱动** | 纯托管 `Plist`（XML + `bplist00`）、`Usbmuxd`、`Lockdown`（配对 + 证书绑定 `SslStream` TLS）、`AFC` 文件系统、以及 **iOS 17.4+/18 `CoreDeviceProxy` + 用户态 IPv6/TCP 隧道 + HTTP/2 `RemoteXPC` + `RSD` + `DVT` 真机截屏、进程列表与 CPU / 内存采样** |
 | **[`iMobileDevice-net`](iMobileDevice-net/)** | **完整上游 C 库 P/Invoke 绑定（`net45` / `netstandard2.0` / `netcoreapp3.0`）** | 随 NuGet 分发原生动态库 | 完整同步上游 `libimobiledevice 1.4.0` + `libplist` + `libusbmuxd` + `libirecovery` + `libideviceactivation`（覆盖全部 28 个公开头文件、332 个 API，新增 `BtPacketLogger`、`OsTrace`、`ReverseProxy`），GitHub Actions 自动构建 **Windows (`win-x64`) + Linux (`linux-x64`) + macOS (`osx-arm64`)** 原生库与 CLI 工具 |
 
 > **运行前提说明**：无论是纯 C# 的 `iMobileDevice.Managed` 还是原生绑定的 `iMobileDevice-net`，常规 USB 通信仍依赖宿主机的设备守护服务：
@@ -81,6 +81,63 @@ byte[] png = await dvt.TakeScreenshotAsync();
 await File.WriteAllBytesAsync("screenshot.png", png);
 ```
 
+### 3. 按 UDID 选择 USB 设备，列出进程并采集 CPU 和内存
+
+在 .NET 8 项目中，从工作流产物或本地构建的 NuGet 包安装托管库。以下命令假设包位于 `./nupkg`。
+
+```bash
+dotnet add package iMobileDevice.Managed --source ./nupkg --prerelease
+```
+
+设备需要已配对，开启开发者模式并挂载开发者镜像。将上面设备枚举中的 `SerialNumber` 作为第一个命令行参数传入。
+
+```csharp
+using iMobileDevice.Managed.Dvt;
+
+await using var dvt = await DvtClient.ConnectUsbAsync(args[0]);
+var processes = await dvt.ListProcessesAsync();
+Console.WriteLine($"当前运行 {processes.Count} 个进程");
+foreach (var process in processes)
+    Console.WriteLine($"{process.ProcessId,6} {process.Name}");
+
+using var sampling = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+try
+{
+    await foreach (var batch in dvt.WatchProcessesAsync(1000, sampling.Token))
+    {
+        foreach (var p in batch.Where(p => p.CpuPercent > 0))
+            Console.WriteLine($"{p.ProcessId,6} {p.Name}  CPU {p.CpuPercent:F1}%  占用 {p.PhysicalFootprintBytes:N0} B");
+    }
+}
+catch (OperationCanceledException) when (sampling.IsCancellationRequested) { }
+```
+
+CPU 按单个核心的百分比计量，多核进程可以超过 100%。内存取 Instruments 的 `physFootprint`，单位为字节。缺失的数值返回 `null`。采样会跳过 CPU 预热的首批，每批只包含设备在该间隔上报的 PID。某个 PID 缺席不代表进程已退出。消费速度过慢时会丢弃旧批次。取消或退出循环后，可以在同一会话继续列进程。连接中断时，读取会以异常结束。
+
+### 4. 按 Bundle ID 监控单个 App
+
+将设备 UDID 和目标 App 的 Bundle ID 作为两个命令行参数传入。对于设备提供了标识的进程，可以从 `ListProcessesAsync()` 返回的 `BundleIdentifier` 读取这个值。只想查询当前主进程 PID 时，调用 `GetApplicationProcessIdAsync(bundleId)` 即可。
+
+```csharp
+using iMobileDevice.Managed.Dvt;
+
+await using var dvt = await DvtClient.ConnectUsbAsync(args[0]);
+int batches = 0;
+await foreach (var app in dvt.WatchApplicationAsync(args[1], intervalMilliseconds: 500))
+{
+    if (app.ProcessId is null)
+        Console.WriteLine("App 未运行");
+    else if (app.Measurement is { } m)
+        Console.WriteLine($"PID {m.ProcessId}  CPU {m.CpuPercent:F1}%  占用 {m.PhysicalFootprintBytes:N0} B");
+    else
+        Console.WriteLine($"PID {app.ProcessId} 正在运行，本批暂无测量值");
+
+    if (++batches == 10) break;
+}
+```
+
+采样可以在 App 打开前开始。每个收到的批次都会向 Instruments 重新查询一次 PID。观察到 PID 变化时先返回新 PID，后续批次再报告它的 CPU 和内存。App 在两次查询之间的短暂启动和退出可能观察不到。
+
 ### `iMobileDevice.Managed` 模块清单
 
 - **`Plist/`**：纯 C# XML 1.0 与二进制 `bplist00` 编解码（支持有符号/无符号 64 位整数、UTF-16BE、Apple 2001 纪元日期、UID）
@@ -89,7 +146,7 @@ await File.WriteAllBytesAsync("screenshot.png", png);
 - **`Afc/`**：40 字节 `CFA6LPAA` 帧协议，支持设备信息、目录列举、文件属性、句柄 Seek/Tell、分块读写、重命名与递归删除
 - **`Tunnel/`**：`CoreDeviceProxyClient`（`CDTunnel` 握手）+ `UserspaceTcpTunnel`（纯用户态 IPv6/TCP 栈）
 - **`RemoteXpc/`**：Apple XPC 二进制序列化、`RemoteXpcConnection`（明文 HTTP/2 帧、流控窗口、并发 RPC 路由）与 `RemoteServiceDiscoveryClient`（RSD）
-- **`Dvt/`**：`NsKeyedArchiver`、`DtxConnection`（多片重组与大小校验）、`DvtClient`（`TakeScreenshotAsync` 及通用通道调用）
+- **`Dvt/`**：`NsKeyedArchiver`、`DtxConnection`（多片重组与大小校验）、`DvtClient`（按 UDID 连接、截屏、进程列表、整机和单个 App 的性能采样）
 
 ---
 
@@ -158,6 +215,12 @@ IMOBILEDEVICE_SCREENSHOT_OUT=./screenshot.png \
   dotnet test iMobileDevice.Managed.Tests/iMobileDevice.Managed.Tests.csproj -c Release
 ```
 
+只验证进程监控和断连时可运行以下命令。接入多台 USB 手机时，通过环境变量 `IMOBILEDEVICE_UDID` 指定其中一台。
+
+```bash
+IMOBILEDEVICE_RUN_DEVICE_E2E=1 dotnet test iMobileDevice.Managed.Tests -c Release --filter FullyQualifiedName~DvtProcessMonitorE2ETests
+```
+
 ### 3. 运行原生绑定单元测试与真机冒烟测试
 
 ```bash
@@ -191,7 +254,8 @@ dotnet add package iMobileDevice.Managed --version <包版本> --source <本地�
 
 每次推送到 `master` 或打 `v*` 标签都会触发 GitHub Actions [Build Native Libraries & NuGet Package](https://github.com/xutongqing/imobiledevice-net/actions/workflows/build-native-and-pack.yml)，自动产出以下 Artifact：
 
-- `imobiledevice-net-nupkg`：同时内嵌 `win-x64`、`linux-x64`、`osx-arm64` 原生库与 CLI 工具的 NuGet 包
+- `imobiledevice-managed-nupkg`：零原生依赖的纯 C# `iMobileDevice.Managed` NuGet 包
+- `imobiledevice-net-nupkg`：内嵌 `win-x64`、`linux-x64`、`osx-arm64` 原生库与 CLI 工具的 `iMobileDevice-net` 包
 - `native-win-x64` / `native-linux-x64` / `native-osx-arm64`：各平台独立动态库与命令行工具
 
 ---

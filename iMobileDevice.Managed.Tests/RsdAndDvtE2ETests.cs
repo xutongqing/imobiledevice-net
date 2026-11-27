@@ -9,6 +9,7 @@ using iMobileDevice.Managed.Usbmuxd;
 using Xunit;
 using Xunit.Abstractions;
 
+[Collection("USB device")]
 public class RsdAndDvtE2ETests
 {
     private readonly ITestOutputHelper output;
@@ -18,17 +19,9 @@ public class RsdAndDvtE2ETests
         this.output = output;
     }
 
-    private static bool ShouldRun =>
-        string.Equals(Environment.GetEnvironmentVariable("IMOBILEDEVICE_RUN_DEVICE_E2E"), "1", StringComparison.Ordinal);
-
-    [Fact]
+    [UsbDeviceFact]
     public async Task PureManagedCoreDeviceTunnelRsdAndDvtScreenshotWorks()
     {
-        if (!ShouldRun)
-        {
-            return;
-        }
-
         var usbmuxd = new UsbmuxdClient();
         await using LockdownClient lockdown = await LockdownClient.ConnectFirstDeviceAsync(usbmuxd, handshake: true);
 

@@ -3,6 +3,7 @@ namespace iMobileDevice.Managed.Dvt;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Runtime.ExceptionServices;
+using System.Threading.Channels;
 
 public enum DtxAuxArgKind
 {
@@ -47,6 +48,7 @@ public sealed class DtxConnection : IAsyncDisposable
     private readonly SemaphoreSlim writeLock = new(1, 1);
     private readonly ConcurrentDictionary<uint, TaskCompletionSource<DtxMessage>> pendingReplies = new();
     private readonly ConcurrentDictionary<(uint Channel, uint Id), (MemoryStream Buffer, uint ExpectedLength)> fragmentBuffers = new();
+    private readonly ConcurrentDictionary<uint, Channel<DtxMessage>> subscribers = new();
     private readonly CancellationTokenSource readerCts = new();
     private readonly Task readerTask;
     private volatile ExceptionDispatchInfo? readFailure;
@@ -57,6 +59,33 @@ public sealed class DtxConnection : IAsyncDisposable
     {
         this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
         readerTask = Task.Run(() => ReadLoopAsync(readerCts.Token));
+    }
+
+    internal ChannelReader<DtxMessage> Subscribe(uint channelCode)
+    {
+        // A slow consumer needs the latest samples. Never block unrelated DTX replies.
+        var queue = Channel.CreateBounded<DtxMessage>(new BoundedChannelOptions(4)
+        {
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+        });
+        if (!subscribers.TryAdd(channelCode, queue))
+        {
+            throw new InvalidOperationException($"DTX channel {channelCode} already has a subscriber.");
+        }
+        if (readFailure is { } failure)
+        {
+            queue.Writer.TryComplete(failure.SourceException);
+        }
+        return queue.Reader;
+    }
+
+    internal void Unsubscribe(uint channelCode)
+    {
+        if (subscribers.TryRemove(channelCode, out var queue))
+        {
+            queue.Writer.TryComplete();
+        }
     }
 
     public async Task<DtxMessage> InvokeAsync(
@@ -223,6 +252,7 @@ public sealed class DtxConnection : IAsyncDisposable
 
     private async Task ReadLoopAsync(CancellationToken cancellationToken)
     {
+        Exception closeError = new EndOfStreamException("DTX connection closed.");
         byte[] header = new byte[MessageHeaderSize];
         try
         {
@@ -298,7 +328,12 @@ public sealed class DtxConnection : IAsyncDisposable
                 {
                     waiter.TrySetResult(message);
                 }
-                else if (expectsReply && conversationIndex == 0)
+                // Device-initiated messages carry the negated local channel number.
+                if (conversationIndex == 0 && subscribers.TryGetValue(unchecked(0u - channelCode), out var subscriber))
+                {
+                    subscriber.Writer.TryWrite(message);
+                }
+                if (expectsReply && conversationIndex == 0)
                 {
                     // Send empty ACK back to server if it expects a reply to a server-initiated notification
                     byte[] ack = BuildSingleFragmentPacket(channelCode, identifier, conversationIndex: 1, payloadFlags: 0, expectsReply: false, Array.Empty<byte>(), Array.Empty<byte>());
@@ -325,7 +360,12 @@ public sealed class DtxConnection : IAsyncDisposable
         }
         finally
         {
-            readFailure ??= ExceptionDispatchInfo.Capture(new EndOfStreamException("DTX connection closed before reply arrived."));
+            readFailure ??= ExceptionDispatchInfo.Capture(closeError);
+            Exception terminal = readFailure.SourceException;
+            foreach (var subscriber in subscribers.Values)
+            {
+                subscriber.Writer.TryComplete(terminal);
+            }
             readerCts.Cancel();
         }
     }

@@ -201,6 +201,11 @@ public static class NsKeyedArchiver
             }
         }
 
+        if (className == "NSNull")
+        {
+            return null;
+        }
+
         if (dict.TryGetValue("NS.data", out var nsData) && nsData is PlistData d)
         {
             return d.Value;
