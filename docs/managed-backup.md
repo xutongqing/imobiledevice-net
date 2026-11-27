@@ -58,4 +58,16 @@ Windows 如有文件正在被读取，目录重命名可能被拒绝。客户端
 
 协议回归覆盖分帧传输、空文件、批量下载中的缺失文件、空间不足、传输中断后重试，以及已知密码和错误密码。恢复测试从公开 API 连接本地模拟设备，验证携带 EscrowBag、目标与来源选择、同步锁、恢复文件字节、设备成功或拒绝，以及源快照保持完整。[传输与存储测试](../iMobileDevice.Managed.Tests/MobileBackupTests.cs) · [恢复会话测试](../iMobileDevice.Managed.Tests/MobileBackupRestoreTests.cs)
 
-真机恢复需单独指定可覆盖的测试设备。选择性备份规则、旧加密 MBDB 清单列举、iCloud 设置和抹除设备仍列在[功能对照表](managed-parity.md)中。
+### Windows USB 真机验收（2026-11-27）
+
+Windows 11 x64（26H2，内部版本 26300）通过 USB 连接已配对的 `iPhone17,1`，系统为 iOS 27.3。设备已启用本地备份加密。Windows 本地通过 43 项无硬件回归测试。实现提交 `a7cb8a0` 的 Windows、Linux、macOS 构建、独立 Managed 包和原生包作业均通过。[GitHub Actions #19](https://github.com/xutongqing/imobiledevice-net/actions/runs/45953531802)
+
+| 操作 | 实测结果 |
+| --- | --- |
+| Managed 全量加密备份 | 在新目录完成并发布。`SnapshotState=finished`、`IsEncrypted=true`。72,547 个数据文件共 9.13 GiB，另有 4 个元数据文件，其中 `Manifest.db` 为 139,309,072 字节。 |
+| Managed 增量加密备份 | 使用仅引用独立 NuGet 的 .NET 8 程序，对全量快照调用 `BackupAsync(..., full: false)`。新快照完成，数据文件 72,547 个，`Manifest.db` 为 138,154,000 字节。使用的包为 [`iMobileDevice.Managed.0.1.0-ci.19.1`](https://github.com/xutongqing/imobiledevice-net/actions/runs/45953531802/artifacts/15177737386)。 |
+| pymobiledevice3 续做增量 | 将同一份 Managed 全量快照复制到独立目录，随后在同一台手机上用 pymobiledevice3 11.57.0 执行 `backup2 backup --no-full`。退出码为 0，结果为已完成的加密快照，`Manifest.db` 为 138,162,192 字节。 |
+
+两次增量结果的 72,547 个数据文件标识全部相同。按标识均匀抽取 128 个文件，再加入体积最大的 4 个，逐一计算磁盘密文的 SHA-256。132 个样本中有 131 个相同、1 个不同。两次增量按先后顺序运行，本次未解密真机清单，无法据此确定差异涉及的逻辑文件或原因。
+
+恢复已通过模拟设备端到端测试。真机恢复需单独指定可覆盖的测试设备，macOS 真机测试也仍待验收。选择性备份规则、旧加密 MBDB 清单列举、iCloud 设置和抹除设备的进展见[功能对照表](managed-parity.md)。
