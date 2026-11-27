@@ -12,3 +12,6 @@ packages
 *~
 out.txt
 docs
+!/docs/
+/docs/*
+!/docs/*.md

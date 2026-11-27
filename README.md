@@ -15,7 +15,7 @@
 > - **macOS**：系统内置 `/var/run/usbmuxd`（开箱即用）
 > - **Linux**：需运行 `usbmuxd`
 > - **Windows**：需安装 Apple Mobile Device Support（iTunes 或 Microsoft Store 版 Apple Devices，监听 `127.0.0.1:27015`）
-> - **iOS 17+/18 DVT 开发者服务（如真机截屏）**：需在设备开启“开发者模式”并挂载对应 Personalized Developer Disk Image（可使用本仓库产物中的 `idevicedevmodectl` 与 `ideviceimagemounter` 完成挂载）
+> - **iOS 开发者服务**需按服务和系统版本准备环境。对照基线中，iOS 17+ 的 DVT 截屏需开启开发者模式，CoreDevice 开发者服务另需挂载个性化开发者镜像。本仓库的真机覆盖情况见[功能对照表](docs/managed-parity.md)。
 
 ---
 
@@ -178,6 +178,14 @@ DOTNET_ROLL_FORWARD=Major IMOBILEDEVICE_RUN_DEVICE_E2E=1 \
 ---
 
 ## 四、获取预编译 NuGet 包与原生产物
+
+纯 C# 项目从同一工作流的 `imobiledevice-managed-nupkg` 制品获取独立的 `iMobileDevice.Managed` 包（`net8.0`）。将制品解压到本地 NuGet 源后，按实际版本安装：
+
+```bash
+dotnet add package iMobileDevice.Managed --version <包版本> --source <本地包源目录>
+```
+
+普通 CI 构建使用 `0.1.0-ci.<run>.<attempt>`，版本标签 `vX.Y.Z` 构建使用 `X.Y.Z`。工作流验证新项目仅从临时包源安装并运行，再上传制品。[Managed 实施路线图](docs/managed-roadmap.md) · [pymobiledevice3 逐项对照](docs/managed-parity.md)
 
 每次推送到 `master` 或打 `v*` 标签都会触发 GitHub Actions [Build Native Libraries & NuGet Package](https://github.com/xutongqing/imobiledevice-net/actions/workflows/build-native-and-pack.yml)，自动产出以下 Artifact：
 

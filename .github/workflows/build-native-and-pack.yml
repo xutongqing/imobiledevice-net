@@ -9,6 +9,34 @@ on:
   workflow_dispatch:
 
 jobs:
+  pack-managed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pack iMobileDevice.Managed
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            version_args=("-p:Version=${GITHUB_REF_NAME#v}")
+          else
+            version_args=(--version-suffix "ci.$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT")
+          fi
+          dotnet pack iMobileDevice.Managed/iMobileDevice.Managed.csproj -c Release -o managed-feed "${version_args[@]}"
+
+      - name: Verify standalone NuGet consumer
+        shell: pwsh
+        run: ./steps/test-managed-package.ps1 -Package (Get-Item managed-feed/*.nupkg).FullName
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imobiledevice-managed-nupkg
+          path: managed-feed/iMobileDevice.Managed.*.nupkg
+          if-no-files-found: error
+
   build-linux-x64:
     runs-on: ubuntu-latest
     steps:
