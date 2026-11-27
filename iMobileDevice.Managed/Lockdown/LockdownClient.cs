@@ -23,6 +23,22 @@ public sealed class LockdownException : Exception
     public string? ErrorCode { get; }
 }
 
+/// <summary>The device accepted these credentials, but usbmuxd did not confirm saving them.</summary>
+public sealed class PairRecordSaveException : IOException
+{
+    internal PairRecordSaveException(UsbmuxdDeviceInfo device, PairRecord record, Exception cause)
+        : base("The device accepted pairing. Retry saving the accepted record to usbmuxd.", cause)
+    {
+        Device = device;
+        PairRecord = record;
+    }
+
+    public UsbmuxdDeviceInfo Device { get; }
+
+    /// <summary>Contains private keys. Pass this record to UsbmuxdClient.SavePairRecordAsync to retry.</summary>
+    public PairRecord PairRecord { get; }
+}
+
 /// <summary>
 /// Pure managed client for Apple's <c>lockdownd</c> service (port 62078), supporting pairing, TLS sessions,
 /// device property queries, and starting downstream device services.
@@ -175,6 +191,8 @@ public sealed class LockdownClient : IAsyncDisposable
         return node as PlistDictionary ?? new PlistDictionary();
     }
 
+    /// <summary>Pairs with the device. Once its acceptance is received, saving has its own 10-second deadline.</summary>
+    /// <exception cref="PairRecordSaveException">Contains the accepted credentials if local persistence fails.</exception>
     public async Task<PairRecord> PairAsync(
         TimeSpan? trustPromptTimeout = null,
         bool saveToUsbmuxd = true,
@@ -236,12 +254,21 @@ public sealed class LockdownClient : IAsyncDisposable
                     }
                     : candidate;
 
+                PairRecord = finalRecord;
                 if (saveToUsbmuxd)
                 {
-                    await usbmuxd.SavePairRecordAsync(device.SerialNumber, finalRecord, device.DeviceId, cancellationToken).ConfigureAwait(false);
+                    // Trust is already committed on the device. Finish persisting even if the caller cancels.
+                    using var saveDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    try
+                    {
+                        await usbmuxd.SavePairRecordAsync(device.SerialNumber, finalRecord, device.DeviceId, saveDeadline.Token).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new PairRecordSaveException(device, finalRecord, ex);
+                    }
                 }
 
-                PairRecord = finalRecord;
                 return finalRecord;
             }
 

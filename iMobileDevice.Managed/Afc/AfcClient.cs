@@ -19,7 +19,7 @@ public sealed class AfcClient : IAsyncDisposable
     private readonly Stream stream;
     private readonly SemaphoreSlim ioLock = new(1, 1);
     private ulong nextPacketNumber;
-    private bool disposed;
+    private int closed;
 
     public AfcClient(Stream stream)
     {
@@ -212,7 +212,10 @@ public sealed class AfcClient : IAsyncDisposable
         }
         finally
         {
-            await CloseFileHandleAsync(handle, CancellationToken.None).ConfigureAwait(false);
+            if (Volatile.Read(ref closed) == 0)
+            {
+                await CloseFileHandleAsync(handle, CancellationToken.None).ConfigureAwait(false);
+            }
         }
     }
 
@@ -231,7 +234,10 @@ public sealed class AfcClient : IAsyncDisposable
         }
         finally
         {
-            await CloseFileHandleAsync(handle, CancellationToken.None).ConfigureAwait(false);
+            if (Volatile.Read(ref closed) == 0)
+            {
+                await CloseFileHandleAsync(handle, CancellationToken.None).ConfigureAwait(false);
+            }
         }
     }
 
@@ -242,8 +248,11 @@ public sealed class AfcClient : IAsyncDisposable
         CancellationToken cancellationToken)
     {
         await ioLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        bool started = false;
         try
         {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref closed) != 0, this);
+            cancellationToken.ThrowIfCancellationRequested();
             ulong packetNum = ++nextPacketNumber;
             ulong thisLen = (ulong)(HeaderSize + headerPayload.Length);
             ulong entireLen = thisLen + (ulong)bodyPayload.Length;
@@ -255,6 +264,7 @@ public sealed class AfcClient : IAsyncDisposable
             BinaryPrimitives.WriteUInt64LittleEndian(header.AsSpan(24, 8), packetNum);
             BinaryPrimitives.WriteUInt64LittleEndian(header.AsSpan(32, 8), (ulong)operation);
 
+            started = true;
             await stream.WriteAsync(header, cancellationToken).ConfigureAwait(false);
             if (!headerPayload.IsEmpty)
             {
@@ -275,6 +285,12 @@ public sealed class AfcClient : IAsyncDisposable
             }
 
             return reply;
+        }
+        catch when (started)
+        {
+            // A partial frame or a late reply makes the next exchange unsafe on this connection.
+            await DisposeAsync().ConfigureAwait(false);
+            throw;
         }
         finally
         {
@@ -408,14 +424,10 @@ public sealed class AfcClient : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (disposed)
+        if (Interlocked.Exchange(ref closed, 1) == 0)
         {
-            return;
+            await stream.DisposeAsync().ConfigureAwait(false);
         }
-
-        disposed = true;
-        await stream.DisposeAsync().ConfigureAwait(false);
-        ioLock.Dispose();
     }
 
     private readonly record struct AfcPacket(ulong PacketNumber, AfcOperation Operation, byte[] HeaderPayload, byte[] Body)

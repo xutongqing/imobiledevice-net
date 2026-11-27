@@ -30,6 +30,7 @@ public sealed class RemoteXpcConnection : IAsyncDisposable
     private readonly Stream stream;
     private readonly Action<string>? trace;
     private readonly SemaphoreSlim writeLock = new(1, 1);
+    private readonly ConcurrentDictionary<uint, SemaphoreSlim> messageWriters = new();
     private readonly ConcurrentDictionary<uint, MemoryStream> streamBuffers = new();
     private readonly ConcurrentDictionary<ulong, TaskCompletionSource<XpcMessage>> pendingReplies = new();
     private readonly Channel<XpcMessage> rootInbox = Channel.CreateUnbounded<XpcMessage>();
@@ -44,7 +45,7 @@ public sealed class RemoteXpcConnection : IAsyncDisposable
     private TaskCompletionSource windowAvailableTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private ulong nextMessageId;
-    private bool disposed;
+    private int disposed;
 
     private RemoteXpcConnection(Stream stream, Action<string>? trace = null)
     {
@@ -161,26 +162,53 @@ public sealed class RemoteXpcConnection : IAsyncDisposable
     private async Task SendDataWithFlowControlAsync(uint streamId, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken)
     {
         const int maxFramePayload = 16384;
-        int offset = 0;
-
-        while (offset < payload.Length)
+        var messageWriter = messageWriters.GetOrAdd(streamId, static _ => new SemaphoreSlim(1, 1));
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, readerCts.Token);
+        var token = lifetime.Token;
+        await messageWriter.WaitAsync(token).ConfigureAwait(false);
+        bool started = false;
+        try
         {
-            int allowed = await WaitForSendWindowAsync(streamId, Math.Min(maxFramePayload, payload.Length - offset), cancellationToken).ConfigureAwait(false);
-            await writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
+            for (int offset = 0; offset < payload.Length;)
             {
-                await WriteFrameLockedAsync(FrameData, 0, streamId, payload.Slice(offset, allowed), cancellationToken).ConfigureAwait(false);
-                if (offset + allowed >= payload.Length)
+                int count = await WaitForSendWindowAsync(streamId, Math.Min(maxFramePayload, payload.Length - offset), token).ConfigureAwait(false);
+                try
                 {
-                    await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    await writeLock.WaitAsync(token).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // No frame took ownership of this reservation.
+                    CreditSendWindow(0, (uint)count);
+                    CreditSendWindow(streamId, (uint)count);
+                    throw;
+                }
+
+                try
+                {
+                    started = true;
+                    await WriteFrameLockedAsync(FrameData, 0, streamId, payload.Slice(offset, count), token).ConfigureAwait(false);
+                    offset += count;
+                    if (offset == payload.Length)
+                    {
+                        await stream.FlushAsync(token).ConfigureAwait(false);
+                    }
+                }
+                finally
+                {
+                    writeLock.Release();
                 }
             }
-            finally
-            {
-                writeLock.Release();
-            }
-
-            offset += allowed;
+        }
+        catch when (started)
+        {
+            // A following wrapper cannot start in the middle of an abandoned one.
+            await DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+        finally
+        {
+            messageWriter.Release();
         }
     }
 
@@ -377,6 +405,7 @@ public sealed class RemoteXpcConnection : IAsyncDisposable
         finally
         {
             FailPendingWaiters(new EndOfStreamException("RemoteXPC connection closed."));
+            readerCts.Cancel();
         }
     }
 
@@ -453,12 +482,11 @@ public sealed class RemoteXpcConnection : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (disposed)
+        if (Interlocked.Exchange(ref disposed, 1) != 0)
         {
             return;
         }
 
-        disposed = true;
         readerCts.Cancel();
         await stream.DisposeAsync().ConfigureAwait(false);
         try
@@ -471,6 +499,5 @@ public sealed class RemoteXpcConnection : IAsyncDisposable
         }
 
         readerCts.Dispose();
-        writeLock.Dispose();
     }
 }

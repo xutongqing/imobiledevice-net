@@ -74,6 +74,45 @@ public class AfcProtocolTests
     }
 
     [Fact]
+    public async Task CancelledAfcFileReadClosesTransportAndPreservesCancellation()
+    {
+        using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(limit.Token);
+        byte[] opened = BuildAfcPacket(1, AfcOperation.FileRefOpenResult, BitConverter.GetBytes(1UL), []);
+        byte[] lateReply = BuildAfcPacket(2, AfcOperation.Data, [], []);
+        using var wire = new ScriptedDuplexStream(opened.Concat(lateReply).ToArray(), opened.Length);
+        await using var afc = new AfcClient(wire);
+        var read = afc.ReadAllBytesAsync("/test", cancel.Token);
+        await wire.Paused.Task.WaitAsync(limit.Token);
+        var written = wire.BytesWritten;
+        cancel.Cancel();
+        wire.Resume.TrySetResult();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => read.WaitAsync(limit.Token));
+        Assert.True(wire.Closed);
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => afc.GetDeviceInfoAsync(limit.Token));
+        Assert.Equal(written, wire.BytesWritten);
+    }
+
+    [Fact]
+    public async Task CancellingAQueuedAfcRequestPreservesTheActiveExchange()
+    {
+        using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cancel = new CancellationTokenSource();
+        var replies = BuildAfcPacket(1, AfcOperation.Data, [], []).Concat(BuildAfcPacket(2, AfcOperation.Data, [], [])).ToArray();
+        using var wire = new ScriptedDuplexStream(replies, pauseAt: 0);
+        await using var afc = new AfcClient(wire);
+        var first = afc.GetDeviceInfoAsync(limit.Token);
+        await wire.Paused.Task.WaitAsync(limit.Token);
+        var queued = afc.GetDeviceInfoAsync(cancel.Token);
+        cancel.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued.WaitAsync(limit.Token));
+        wire.Resume.TrySetResult();
+        await first;
+        await afc.GetDeviceInfoAsync(limit.Token);
+        Assert.False(wire.Closed);
+    }
+
+    [Fact]
     public void PairRecordVerifyRemoteDeviceCertificateAcceptsMatchAndRejectsMismatch()
     {
         using var deviceRsa = RSA.Create(2048);
@@ -96,8 +135,15 @@ public class AfcProtocolTests
         private readonly MemoryStream readStream;
         private readonly MemoryStream writeStream = new();
 
-        public ScriptedDuplexStream(byte[] scriptedReplies)
+        private readonly int pauseAt;
+        public TaskCompletionSource Paused { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Resume { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public long BytesWritten => writeStream.Length;
+        public bool Closed { get; private set; }
+
+        public ScriptedDuplexStream(byte[] scriptedReplies, int pauseAt = -1)
         {
+            this.pauseAt = pauseAt;
             readStream = new MemoryStream(scriptedReplies, writable: false);
         }
 
@@ -109,7 +155,19 @@ public class AfcProtocolTests
         public override void Flush() { }
         public override Task FlushAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         public override int Read(byte[] buffer, int offset, int count) => readStream.Read(buffer, offset, count);
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => readStream.ReadAsync(buffer, cancellationToken);
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (readStream.Position == pauseAt && Paused.TrySetResult())
+                await Resume.Task.WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return await readStream.ReadAsync(buffer, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            Closed = true;
+            base.Dispose(disposing);
+        }
         public override void Write(byte[] buffer, int offset, int count) => writeStream.Write(buffer, offset, count);
         public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default) => writeStream.WriteAsync(buffer, cancellationToken);
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();

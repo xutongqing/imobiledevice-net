@@ -2,6 +2,7 @@ namespace iMobileDevice.Managed.Dvt;
 
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
+using System.Runtime.ExceptionServices;
 
 public enum DtxAuxArgKind
 {
@@ -48,6 +49,7 @@ public sealed class DtxConnection : IAsyncDisposable
     private readonly ConcurrentDictionary<(uint Channel, uint Id), (MemoryStream Buffer, uint ExpectedLength)> fragmentBuffers = new();
     private readonly CancellationTokenSource readerCts = new();
     private readonly Task readerTask;
+    private volatile ExceptionDispatchInfo? readFailure;
     private int nextIdentifier;
     private bool disposed;
 
@@ -64,6 +66,10 @@ public sealed class DtxConnection : IAsyncDisposable
         bool expectsReply = true,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        readFailure?.Throw();
+        using var sendCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, readerCts.Token);
+        var token = sendCts.Token;
         uint id = (uint)Interlocked.Increment(ref nextIdentifier);
         TaskCompletionSource<DtxMessage>? tcs = null;
         if (expectsReply)
@@ -78,11 +84,11 @@ public sealed class DtxConnection : IAsyncDisposable
             byte[] objBytes = NsKeyedArchiver.Archive(selector);
             byte[] packet = BuildSingleFragmentPacket(channelCode, id, conversationIndex: 0, FlagDispatch, expectsReply, auxBytes, objBytes);
 
-            await writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            await writeLock.WaitAsync(token).ConfigureAwait(false);
             try
             {
-                await stream.WriteAsync(packet, cancellationToken).ConfigureAwait(false);
-                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await stream.WriteAsync(packet, token).ConfigureAwait(false);
+                await stream.FlushAsync(token).ConfigureAwait(false);
             }
             finally
             {
@@ -94,14 +100,18 @@ public sealed class DtxConnection : IAsyncDisposable
                 return new DtxMessage(channelCode, id, 0, 0, false, null, Array.Empty<object?>());
             }
 
-            using var reg = cancellationToken.Register(() => tcs!.TrySetCanceled(cancellationToken));
-            DtxMessage reply = await tcs!.Task.ConfigureAwait(false);
+            DtxMessage reply = await tcs!.Task.WaitAsync(token).ConfigureAwait(false);
             if ((reply.Flags & 0xFF) == FlagError)
             {
                 throw new InvalidOperationException($"DTX invocation '{selector}' on channel {channelCode} returned error: {reply.Payload}");
             }
 
             return reply;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && readFailure != null)
+        {
+            readFailure.Throw();
+            throw;
         }
         finally
         {
@@ -304,21 +314,16 @@ public sealed class DtxConnection : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            // Normal shutdown.
+            // DisposeAsync requested shutdown.
         }
         catch (Exception ex)
         {
-            foreach (var kv in pendingReplies)
-            {
-                kv.Value.TrySetException(ex);
-            }
+            readFailure = ExceptionDispatchInfo.Capture(ex);
         }
         finally
         {
-            foreach (var kv in pendingReplies)
-            {
-                kv.Value.TrySetException(new EndOfStreamException("DTX connection closed before reply arrived."));
-            }
+            readFailure ??= ExceptionDispatchInfo.Capture(new EndOfStreamException("DTX connection closed before reply arrived."));
+            readerCts.Cancel();
         }
     }
 
@@ -374,6 +379,5 @@ public sealed class DtxConnection : IAsyncDisposable
         }
 
         readerCts.Dispose();
-        writeLock.Dispose();
     }
 }

@@ -3,6 +3,8 @@ namespace iMobileDevice.Managed.Tests;
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
 using iMobileDevice.Managed.Diagnostics;
 using iMobileDevice.Managed.Lockdown;
 using iMobileDevice.Managed.Plist;
@@ -86,11 +88,78 @@ public class DeviceDiscoveryTests
             Assert.Empty(missing.Devices);
         });
 
-        using var reserved = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        reserved.Bind(new IPEndPoint(IPAddress.Loopback, 0));
-        var unavailable = await DeviceConnectionDiagnostics.InspectAsync(new UsbmuxdClient(reserved.LocalEndPoint));
+        // A missing socket is unavailable immediately. A bound TCP port can instead time out.
+        var missingSocket = new UnixDomainSocketEndPoint($"missing-{Guid.NewGuid():N}.sock");
+        var unavailable = await DeviceConnectionDiagnostics.InspectAsync(new UsbmuxdClient(missingSocket));
         Assert.Equal(DiscoveryStatus.DaemonUnavailable, unavailable.Status);
-        Assert.Equal(reserved.LocalEndPoint!.ToString(), unavailable.Endpoint);
+        Assert.Equal(missingSocket.ToString(), unavailable.Endpoint);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task AcceptedPairRecordSurvivesCancellationOrStoreFailure(bool autoPair, bool failSave)
+    {
+        var device = new UsbmuxdDeviceInfo(7, "test-device", 1, UsbmuxdConnectionType.Usb);
+        using var deviceKey = RSA.Create(2048);
+        byte[] publicKey = Encoding.ASCII.GetBytes(deviceKey.ExportRSAPublicKeyPem());
+        byte[] escrow = [1, 2, 3];
+        using var caller = new CancellationTokenSource();
+        await WithDaemonAsync(async (listener, ct) =>
+        {
+            using var peer = await listener.AcceptTcpClientAsync(ct);
+            await ExchangeAsync(peer, true, "Connect", Result(0), ct);
+            if (autoPair)
+            {
+                await ExchangeAsync(peer, false, "QueryType", new() { ["Type"] = "com.apple.mobile.lockdown" }, ct);
+                using var lookup = await listener.AcceptTcpClientAsync(ct);
+                await ExchangeAsync(lookup, true, "ReadPairRecord", Result(2), ct);
+            }
+            await ExchangeAsync(peer, false, "GetValue", new() { ["Value"] = publicKey }, ct);
+            await ExchangeAsync(peer, false, "GetValue", new(), ct);
+            using (var buid = await listener.AcceptTcpClientAsync(ct))
+                await ExchangeAsync(buid, true, "ReadBUID", new() { ["BUID"] = "test-buid" }, ct);
+            var pair = await ExchangeAsync(peer, false, "Pair", new() { ["EscrowBag"] = escrow }, ct);
+            using var db = await listener.AcceptTcpClientAsync(ct);
+            var save = await ExchangeAsync(db, true, "SavePairRecord", Result(failSave ? 1 : 0), ct, caller.Cancel);
+            byte[] stored = save.GetData("PairRecordData")!;
+            var record = PairRecord.FromPlist(PlistSerializer.Parse(stored).AsDictionary());
+            Assert.Equal(pair["PairRecord"].AsDictionary().GetString("HostID"), record.HostId);
+            Assert.Equal(escrow, record.EscrowBag);
+            Assert.NotEmpty(record.HostPrivateKey);
+            if (failSave)
+            {
+                using var retry = await listener.AcceptTcpClientAsync(ct);
+                var saved = await ExchangeAsync(retry, true, "SavePairRecord", Result(0), ct);
+                Assert.Equal(stored, saved.GetData("PairRecordData"));
+            }
+        }, async (mux, ct) =>
+        {
+            using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(caller.Token, ct);
+            PairRecordSaveException error;
+            if (autoPair)
+            {
+                error = await Assert.ThrowsAsync<PairRecordSaveException>(() =>
+                    LockdownClient.ConnectAsync(mux, device, autoPair: true, cancellationToken: lifetime.Token));
+            }
+            else
+            {
+                await using var lockdown = await LockdownClient.ConnectAsync(mux, device, handshake: false, cancellationToken: ct);
+                if (!failSave)
+                {
+                    var record = await lockdown.PairAsync(cancellationToken: lifetime.Token);
+                    Assert.Same(record, lockdown.PairRecord);
+                    Assert.True(caller.IsCancellationRequested);
+                    return;
+                }
+                error = await Assert.ThrowsAsync<PairRecordSaveException>(() => lockdown.PairAsync(cancellationToken: lifetime.Token));
+                Assert.Same(error.PairRecord, lockdown.PairRecord);
+            }
+            Assert.IsType<UsbmuxdException>(error.InnerException);
+            Assert.Equal(device, error.Device);
+            await mux.SavePairRecordAsync(error.Device.SerialNumber, error.PairRecord, error.Device.DeviceId, ct);
+        });
     }
 
     [Theory]
@@ -159,7 +228,7 @@ public class DeviceDiscoveryTests
 
     private static PlistDictionary Result(int number) => new() { ["MessageType"] = "Result", ["Number"] = number };
 
-    private static async Task<PlistDictionary> ExchangeAsync(TcpClient socket, bool mux, string expected, PlistDictionary reply, CancellationToken ct)
+    private static async Task<PlistDictionary> ExchangeAsync(TcpClient socket, bool mux, string expected, PlistDictionary reply, CancellationToken ct, Action? beforeReply = null)
     {
         var stream = socket.GetStream();
         var header = new byte[mux ? 16 : 4];
@@ -170,6 +239,7 @@ public class DeviceDiscoveryTests
         await stream.ReadExactlyAsync(body, ct);
         var request = PlistSerializer.Parse(body).AsDictionary();
         Assert.Equal(expected, request.GetString(mux ? "MessageType" : "Request"));
+        beforeReply?.Invoke();
         body = PlistSerializer.WriteXml(reply);
         if (mux) BinaryPrimitives.WriteInt32LittleEndian(header, body.Length + 16);
         else BinaryPrimitives.WriteInt32BigEndian(header, body.Length);

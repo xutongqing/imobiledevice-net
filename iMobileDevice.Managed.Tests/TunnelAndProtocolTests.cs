@@ -115,6 +115,71 @@ public class TunnelAndProtocolTests
         Assert.Equal(0, UserspaceTcpTunnel.ComputeIpv6TcpChecksum(src, dst, tcp));
     }
 
+    [Fact]
+    public async Task DtxRejectsPendingAndFutureRequestsAfterPeerEof()
+    {
+        using var duplex = new PairedMemoryStream(Array.Empty<byte>());
+        await using var dtx = new DtxConnection(duplex);
+        var limit = TimeSpan.FromSeconds(5);
+        await Assert.ThrowsAsync<EndOfStreamException>(() => dtx.InvokeAsync(1, "takeScreenshot").WaitAsync(limit));
+        long written = duplex.BytesWritten;
+        await Assert.ThrowsAsync<EndOfStreamException>(() => dtx.InvokeAsync(1, "takeScreenshot").WaitAsync(limit));
+        Assert.Equal(written, duplex.BytesWritten);
+    }
+
+    [Fact]
+    public async Task ConcurrentRemoteXpcRequestsKeepTheirWrappersIntact()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var token = deadline.Token;
+        using var wire = new PausedFrameStream();
+        await using var connection = await RemoteXpcConnection.ConnectAsync(wire, token);
+        int handshakeSize = (int)wire.Length;
+        var large = new Dictionary<string, object?> { ["data"] = new byte[22000] };
+        var small = new Dictionary<string, object?> { ["label"] = "second" };
+
+        var first = connection.SendAsync(large, expectingReply: false, cancellationToken: token);
+        await wire.FirstDataFrame.Task.WaitAsync(token);
+        var second = connection.SendAsync(small, expectingReply: false, cancellationToken: token);
+        wire.Resume.TrySetResult();
+        ulong[] ids = await Task.WhenAll(first, second);
+
+        byte[] frames = wire.ToArray();
+        using var payload = new MemoryStream();
+        for (int pos = handshakeSize; pos < frames.Length;)
+        {
+            int count = (frames[pos] << 16) | (frames[pos + 1] << 8) | frames[pos + 2];
+            Assert.Equal(0, frames[pos + 3]); // DATA
+            Assert.Equal(RemoteXpcConnection.RootStreamId, BinaryPrimitives.ReadUInt32BigEndian(frames.AsSpan(pos + 5)));
+            payload.Write(frames, pos + 9, count);
+            pos += count + 9;
+        }
+
+        var flags = XpcWrapperFlags.AlwaysSet | XpcWrapperFlags.DataFlag;
+        var expected = XpcSerializer.SerializeWrapper(flags, ids[0], large)
+            .Concat(XpcSerializer.SerializeWrapper(flags, ids[1], small)).ToArray();
+        Assert.True(expected.AsSpan().SequenceEqual(payload.ToArray()), "Two concurrent XPC wrappers were interleaved.");
+    }
+
+    private sealed class PausedFrameStream : MemoryStream
+    {
+        public TaskCompletionSource FirstDataFrame { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Resume { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (buffer.Length == 16384 && FirstDataFrame.TrySetResult())
+                await Resume.Task.WaitAsync(cancellationToken);
+            await base.WriteAsync(buffer, cancellationToken);
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return 0;
+        }
+    }
+
     private static void WriteDtxHeader(Stream s, ushort fragId, ushort fragCount, uint length, uint id, uint convIdx, uint chan)
     {
         byte[] h = new byte[32];
@@ -135,6 +200,8 @@ public class TunnelAndProtocolTests
         private readonly MemoryStream reader;
         private readonly MemoryStream writer = new();
         private readonly TaskCompletionSource firstWriteTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public long BytesWritten => writer.Length;
 
         public PairedMemoryStream(byte[] scriptedReply)
         {
